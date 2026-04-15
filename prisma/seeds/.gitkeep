@@ -1,0 +1,5 @@
+# Seeds Directory
+
+Esta pasta contém arquivos de dados para popular o banco de dados (seed data).
+
+- `Produtos.csv` - Dados de produtos para importação inicial

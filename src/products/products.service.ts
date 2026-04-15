@@ -1,0 +1,170 @@
+import {
+    BadRequestException,
+    ConflictException,
+    Injectable,
+    NotFoundException,
+} from '@nestjs/common';
+import { PrismaService } from 'src/prisma.service';
+import { UploadService } from 'src/upload/upload.service';
+import { CreateProductDto } from './__dtos__/createProduct.dto';
+import { UpdateProductDto } from './__dtos__/updateProduct.dto';
+import { generateInternalBarcode } from 'src/utils/barcode';
+
+@Injectable()
+export class ProductsService {
+    constructor(
+        private prisma: PrismaService,
+        private uploadService: UploadService,
+    ) { }
+
+    async create(dto: CreateProductDto, file?: Express.Multer.File) {
+        let barcode = dto.barcode;
+        let barcodeGenerated = false;
+        
+        if (!barcode) {
+            barcode = await generateInternalBarcode(this.prisma);
+            barcodeGenerated = true;
+        } else {
+            const exists = await this.prisma.product.findUnique({
+                where: { barcode },
+            });
+            if (exists) throw new ConflictException('Código de barras já cadastrado');
+        }
+
+        const { initialStock, minQuantity, ...productData } = dto;
+
+        const stockQuantity = initialStock ?? 0;
+        const minStockQuantity = minQuantity ?? 0;
+
+        if (stockQuantity <= 0) {
+            throw new BadRequestException('Estoque inicial deve ser maior que 0');
+        }
+
+        if (stockQuantity < minStockQuantity) {
+            throw new BadRequestException(`Estoque inicial (${stockQuantity}) não pode ser menor que o estoque mínimo (${minStockQuantity})`);
+        }
+
+        let imageUrl: string | undefined;
+        if (file) {
+            imageUrl = await this.uploadService.saveFile(file);
+        }
+
+        return this.prisma.$transaction(async (tx) => {
+            const product = await tx.product.create({
+                data: {
+                    ...productData,
+                    barcode,
+                    barcodeGenerated,
+                    imageUrl: imageUrl || dto.imageUrl,
+                }
+            });
+
+            await tx.stock.create({
+                data: {
+                    productId: product.id,
+                    quantity: initialStock ?? 0,
+                    minQuantity: minQuantity ?? 5,
+                },
+            });
+
+            const createdProduct = await tx.product.findUnique({
+                where: { id: product.id },
+                include: { category: true, brand: true, supplier: true, stock: true },
+            });
+
+            if (!createdProduct) throw new NotFoundException('Erro ao criar produto');
+            return createdProduct;
+        });
+    }
+
+    async findAll(search?: string) {
+        return this.prisma.product.findMany({
+            where: {
+                active: true,
+                ...(search && {
+                    OR: [
+                        { name: { contains: search, mode: 'insensitive' } },
+                        { barcode: { contains: search } },
+                    ],
+                }),
+            },
+            include: {
+                category: true,
+                brand: true,
+                supplier: true,
+                stock: true,
+            },
+            orderBy: { name: 'asc' },
+        });
+    }
+
+    async findOne(id: string) {
+        const product = await this.prisma.product.findUnique({
+            where: { id },
+            include: { category: true, brand: true, supplier: true, stock: true },
+        });
+        if (!product) throw new NotFoundException('Produto não encontrado');
+        return product;
+    }
+
+    async findByBarcode(barcode: string) {
+        const product = await this.prisma.product.findUnique({
+            where: { barcode },
+            include: { category: true, brand: true, supplier: true, stock: true },
+        });
+        if (!product) throw new NotFoundException('Produto não encontrado para este código de barras');
+        return product;
+    }
+
+    async update(id: string, dto: UpdateProductDto, file?: Express.Multer.File) {
+        const product = await this.findOne(id);
+
+        if (dto.barcode) {
+            const exists = await this.prisma.product.findFirst({
+                where: { barcode: dto.barcode, NOT: { id } },
+            });
+            if (exists) throw new ConflictException('Código de barras já cadastrado em outro produto');
+        }
+
+        const { initialStock, minQuantity, ...productData } = dto;
+
+        let imageUrl: string | undefined;
+        if (file) {
+            imageUrl = await this.uploadService.saveFile(file);
+            if (product.imageUrl) {
+                await this.uploadService.deleteFile(product.imageUrl);
+            }
+        }
+
+        return this.prisma.product.update({
+            where: { id },
+            data: {
+                ...productData,
+                ...(imageUrl && { imageUrl }),
+            },
+            include: { category: true, brand: true, supplier: true, stock: true },
+        });
+    }
+
+    async remove(id: string) {
+        await this.findOne(id);
+        return this.prisma.product.update({ 
+            where: { id }, 
+            data: { active: false },
+            include: { category: true, brand: true, supplier: true, stock: true },
+        });
+    }
+
+    async findLowStock() {
+        const stocks = await this.prisma.stock.findMany({
+            where: {
+                product: { active: true },
+            },
+            include: { product: { include: { category: true, brand: true, supplier: true, stock: true } } },
+        });
+
+        return stocks
+            .filter((s) => s.quantity <= s.minQuantity)
+            .map((s) => s.product);
+    }
+}

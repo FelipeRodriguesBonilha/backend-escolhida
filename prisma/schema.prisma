@@ -12,3 +12,120 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+enum UserRole {
+  ADMIN
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      UserRole @default(ADMIN)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Supplier {
+  id        String    @id @default(uuid())
+  name      String
+  cnpj      String?   @unique
+  phone     String?
+  email     String?
+  address   String?
+  active    Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  products  Product[]
+}
+
+model Category {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  active    Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  products  Product[]
+}
+
+model Brand {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  active    Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  products  Product[]
+}
+
+model Product {
+  id               String     @id @default(uuid())
+  name             String
+  barcode          String?    @unique
+  barcodeGenerated Boolean    @default(false)
+  description      String?
+  price            Decimal    @db.Decimal(10, 2)
+  costPrice        Decimal    @db.Decimal(10, 2)
+  categoryId       String
+  brandId          String
+  supplierId       String?
+  imageUrl         String?
+  active           Boolean    @default(true)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  category  Category   @relation(fields: [categoryId], references: [id])
+  brand     Brand      @relation(fields: [brandId], references: [id])
+  supplier  Supplier?  @relation(fields: [supplierId], references: [id])
+  stock     Stock?
+  saleItems SaleItem[]
+}
+
+model Stock {
+  id          String   @id @default(uuid())
+  productId   String   @unique
+  quantity    Int      @default(0)
+  minQuantity Int      @default(5)
+  updatedAt   DateTime @updatedAt
+
+  product Product @relation(fields: [productId], references: [id])
+}
+
+model PaymentMethod {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String   
+  active    Boolean  @default(true)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  sales Sale[]
+}
+
+model Sale {
+  id              String   @id @default(uuid())
+  total           Decimal  @db.Decimal(10, 2)
+  discount        Decimal  @db.Decimal(10, 2) @default(0)
+  finalTotal      Decimal  @db.Decimal(10, 2)
+  amountPaid      Decimal  @db.Decimal(10, 2)
+  change          Decimal  @db.Decimal(10, 2)
+  paymentMethodId String
+  installments    Int?
+  installmentValue Decimal? @db.Decimal(10, 2)
+  notes           String?
+  createdAt       DateTime @default(now())
+
+  paymentMethod PaymentMethod @relation(fields: [paymentMethodId], references: [id])
+  items         SaleItem[]
+}
+
+model SaleItem {
+  id        String  @id @default(uuid())
+  saleId    String
+  productId String
+  quantity  Int
+  unitPrice Decimal @db.Decimal(10, 2)
+  subtotal  Decimal @db.Decimal(10, 2)
+
+  sale    Sale    @relation(fields: [saleId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+}
