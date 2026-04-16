@@ -31,12 +31,12 @@ export class ReportsService {
 
         console.log(`Found ${sales.length} sales for ${dateStr}`);
 
-        const totalRevenue = sales.reduce((sum, s) => sum + Number(s.total), 0);
+        const totalRevenue = sales.reduce((sum, s) => sum + Number(s.finalTotal), 0);
         const totalSales = sales.length;
 
         const byPaymentMethod = sales.reduce((acc, sale) => {
             const method = sale.paymentMethod.name;
-            acc[method] = (acc[method] ?? 0) + Number(sale.total);
+            acc[method] = (acc[method] ?? 0) + Number(sale.finalTotal);
             return acc;
         }, {} as Record<string, number>);
 
@@ -85,7 +85,7 @@ export class ReportsService {
             orderBy: { createdAt: 'asc' },
         });
 
-        const totalRevenue = sales.reduce((sum, s) => sum + Number(s.total), 0);
+        const totalRevenue = sales.reduce((sum, s) => sum + Number(s.finalTotal), 0);
         const totalSales = sales.length;
 
         const byDay: Record<string, { totalSales: number; totalRevenue: number }> = {};
@@ -98,12 +98,12 @@ export class ReportsService {
             
             if (!byDay[dateKey]) byDay[dateKey] = { totalSales: 0, totalRevenue: 0 };
             byDay[dateKey].totalSales += 1;
-            byDay[dateKey].totalRevenue += Number(sale.total);
+            byDay[dateKey].totalRevenue += Number(sale.finalTotal);
         }
 
         const byPaymentMethod = sales.reduce((acc, sale) => {
             const method = sale.paymentMethod.name;
-            acc[method] = (acc[method] ?? 0) + Number(sale.total);
+            acc[method] = (acc[method] ?? 0) + Number(sale.finalTotal);
             return acc;
         }, {} as Record<string, number>);
 
@@ -259,7 +259,7 @@ export class ReportsService {
                 where: { createdAt: { gte: start, lte: end } }
             });
 
-            const totalRevenue = sales.reduce((sum, s) => sum + Number(s.total), 0);
+            const totalRevenue = sales.reduce((sum, s) => sum + Number(s.finalTotal), 0);
             const totalSales = sales.length;
 
             chartData.push({
