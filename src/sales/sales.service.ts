@@ -236,10 +236,25 @@ export class SalesService {
         });
     }
 
-    async findAll(page = 1, limit = 20) {
+    async findAll(page = 1, limit = 20, date?: string) {
         const skip = (page - 1) * limit;
+        
+        let dateFilter = {};
+        if (date) {
+            const [year, month, day] = date.split('-').map(Number);
+            const start = new Date(year, month - 1, day, 0, 0, 0, 0);
+            const end = new Date(year, month - 1, day, 23, 59, 59, 999);
+            dateFilter = {
+                createdAt: {
+                    gte: start,
+                    lte: end,
+                },
+            };
+        }
+        
         const [sales, total] = await Promise.all([
             this.prisma.sale.findMany({
+                where: dateFilter,
                 skip,
                 take: limit,
                 orderBy: { createdAt: 'desc' },
@@ -250,7 +265,7 @@ export class SalesService {
                     paymentMethod: true,
                 },
             }),
-            this.prisma.sale.count(),
+            this.prisma.sale.count({ where: dateFilter }),
         ]);
 
         return {

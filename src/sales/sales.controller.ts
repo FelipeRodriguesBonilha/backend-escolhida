@@ -29,8 +29,12 @@ export class SalesController {
   }
 
   @Get()
-  async findAll(@Query('page') page = '1', @Query('limit') limit = '20') {
-    const result = await this.salesService.findAll(Number(page), Number(limit));
+  async findAll(
+    @Query('page') page = '1',
+    @Query('limit') limit = '20',
+    @Query('date') date?: string,
+  ) {
+    const result = await this.salesService.findAll(Number(page), Number(limit), date);
     return {
       ...result,
       data: result.data.map(sale => new ReturnSaleDto(sale)),
