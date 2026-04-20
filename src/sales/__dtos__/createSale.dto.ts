@@ -21,6 +21,22 @@ export class SaleItemDto {
     quantity: number;
 }
 
+export class SalePaymentMethodDto {
+    @IsString()
+    paymentMethodId: string;
+
+    @Type(() => Number)
+    @IsNumber({ maxDecimalPlaces: 2 })
+    @IsPositive()
+    amount: number;
+
+    @IsOptional()
+    @Type(() => Number)
+    @IsInt()
+    @Min(1)
+    installments?: number;
+}
+
 export class CreateSaleDto {
     @IsArray()
     @ArrayMinSize(1)
@@ -28,24 +44,16 @@ export class CreateSaleDto {
     @Type(() => SaleItemDto)
     items: SaleItemDto[];
 
-    @IsString()
-    paymentMethodId: string;
+    @IsArray()
+    @ArrayMinSize(1)
+    @ValidateNested({ each: true })
+    @Type(() => SalePaymentMethodDto)
+    payments: SalePaymentMethodDto[];
 
     @Type(() => Number)
     @IsNumber({ maxDecimalPlaces: 2 })
     @Min(0)
     discount: number = 0;
-
-    @Type(() => Number)
-    @IsNumber({ maxDecimalPlaces: 2 })
-    @IsPositive()
-    amountPaid: number;
-
-    @IsOptional()
-    @Type(() => Number)
-    @IsInt()
-    @Min(1)
-    installments?: number;
 
     @IsOptional()
     @IsString()

@@ -1,4 +1,4 @@
-import { Sale, PaymentMethod, SaleItem } from "src/generated/prisma/client";
+import { Sale, SaleItem, SalePaymentMethod, PaymentMethod } from "src/generated/prisma/client";
 import { ReturnSaleDto } from "src/sales/__dtos__/returnSale.dto";
 
 export class ReturnDailyReportDto {
@@ -27,7 +27,7 @@ export class ReturnDailyReportDto {
             quantity: number;
             revenue: number;
         }>;
-        sales: (Sale & { paymentMethod?: PaymentMethod | null; items?: SaleItem[] | null })[];
+        sales: (Sale & { payments?: (SalePaymentMethod & { paymentMethod?: PaymentMethod | null })[] | null; items?: SaleItem[] | null })[];
         totalProductsSold?: number;
         paymentMethodsArray?: Array<{ method: string; amount: number }>;
     }) {

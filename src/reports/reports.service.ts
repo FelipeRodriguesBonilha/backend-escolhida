@@ -24,7 +24,7 @@ export class ReportsService {
             where: { createdAt: { gte: start, lte: end } },
             include: {
                 items: { include: { product: { include: { category: true } } } },
-                paymentMethod: true,
+                payments: { include: { paymentMethod: true } },
             },
             orderBy: { createdAt: 'desc' },
         });
@@ -35,8 +35,10 @@ export class ReportsService {
         const totalSales = sales.length;
 
         const byPaymentMethod = sales.reduce((acc, sale) => {
-            const method = sale.paymentMethod.name;
-            acc[method] = (acc[method] ?? 0) + Number(sale.finalTotal);
+            for (const payment of sale.payments) {
+                const method = payment.paymentMethod.name;
+                acc[method] = (acc[method] ?? 0) + Number(payment.amount);
+            }
             return acc;
         }, {} as Record<string, number>);
 
@@ -80,7 +82,7 @@ export class ReportsService {
             where: { createdAt: { gte: start, lte: end } },
             include: {
                 items: { include: { product: { include: { category: true } } } },
-                paymentMethod: true,
+                payments: { include: { paymentMethod: true } },
             },
             orderBy: { createdAt: 'asc' },
         });
@@ -102,8 +104,10 @@ export class ReportsService {
         }
 
         const byPaymentMethod = sales.reduce((acc, sale) => {
-            const method = sale.paymentMethod.name;
-            acc[method] = (acc[method] ?? 0) + Number(sale.finalTotal);
+            for (const payment of sale.payments) {
+                const method = payment.paymentMethod.name;
+                acc[method] = (acc[method] ?? 0) + Number(payment.amount);
+            }
             return acc;
         }, {} as Record<string, number>);
 

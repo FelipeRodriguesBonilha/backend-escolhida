@@ -48,29 +48,51 @@ export class SalesService {
         };
     }
 
+    private async validatePayments(
+        payments: { paymentMethodId: string; amount: number; installments?: number }[],
+        prismaClient: Omit<PrismaService, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'>,
+    ) {
+        const results = await Promise.all(
+            payments.map(async (payment) => {
+                const method = await prismaClient.paymentMethod.findUnique({
+                    where: { id: payment.paymentMethodId, active: true },
+                });
+
+                if (!method) {
+                    throw new BadRequestException(`Método de pagamento ID ${payment.paymentMethodId} não encontrado`);
+                }
+
+                if (payment.installments && method.code !== 'CREDIT_CARD') {
+                    throw new BadRequestException(`Parcelas são permitidas apenas para cartão de crédito (método: ${method.name})`);
+                }
+
+                if (!payment.installments && method.code === 'CREDIT_CARD') {
+                    throw new BadRequestException(`Parcelas são obrigatórias para cartão de crédito (método: ${method.name})`);
+                }
+
+                const installmentValue = payment.installments
+                    ? Math.round((payment.amount / payment.installments) * 100) / 100
+                    : null;
+
+                return {
+                    paymentMethodId: payment.paymentMethodId,
+                    paymentMethodName: method.name,
+                    amount: payment.amount,
+                    installments: payment.installments ?? null,
+                    installmentValue,
+                };
+            }),
+        );
+
+        return results;
+    }
+
     async simulate(dto: SimulateSaleDto) {
-        const paymentMethod = await this.prisma.paymentMethod.findUnique({
-            where: { id: dto.paymentMethodId, active: true }
-        });
-
-        if (!paymentMethod) {
-            throw new BadRequestException('Método de pagamento não encontrado');
-        }
-
-        if (dto.installments && paymentMethod.code !== 'CREDIT_CARD') {
-            throw new BadRequestException('Parcelas são permitidas apenas para cartão de crédito');
-        }
-
-        if (!dto.installments && paymentMethod.code === 'CREDIT_CARD') {
-            throw new BadRequestException('Parcelas são obrigatórias para cartão de crédito');
-        }
+        const validatedPayments = await this.validatePayments(dto.payments, this.prisma);
 
         const itemsWithDetails = await Promise.all(
             dto.items.map(async (item) => {
-                const validation = await this.validateItemWithStock(
-                    item,
-                    this.prisma,
-                );
+                const validation = await this.validateItemWithStock(item, this.prisma);
 
                 return {
                     productId: validation.product.id,
@@ -96,15 +118,21 @@ export class SalesService {
         const discount = Math.round(dto.discount * 100) / 100;
         const total = Math.round((subtotal - discount) * 100) / 100;
 
-        const change =
-            dto.amountPaid !== undefined
-                ? Math.round((dto.amountPaid - total) * 100) / 100
-                : null;
+        const amountPaid = Math.round(
+            validatedPayments.reduce((sum, p) => sum + p.amount, 0) * 100,
+        ) / 100;
 
-        const canFinalize = stockErrors.length === 0 &&
-            (dto.amountPaid === undefined || dto.amountPaid >= total);
+        const change = Math.round((amountPaid - total) * 100) / 100;
+        const paymentErrors: { type: string; message: string }[] = [];
 
-        const installmentValue = dto.installments ? Math.round((total / dto.installments) * 100) / 100 : null;
+        if (amountPaid < total) {
+            paymentErrors.push({
+                type: 'INSUFFICIENT_PAYMENT',
+                message: `Valor pago (R$ ${amountPaid.toFixed(2)}) é menor que o total (R$ ${total.toFixed(2)}). Faltam R$ ${(total - amountPaid).toFixed(2)}`,
+            });
+        }
+
+        const canFinalize = stockErrors.length === 0 && paymentErrors.length === 0;
 
         return {
             canFinalize,
@@ -115,10 +143,9 @@ export class SalesService {
                 subtotal,
                 discount,
                 total,
-                amountPaid: dto.amountPaid ?? null,
-                change: change !== null && change < 0 ? null : change,
-                installments: dto.installments ?? null,
-                installmentValue,
+                amountPaid,
+                change: change < 0 ? null : change,
+                payments: validatedPayments,
             },
             errors: [
                 ...stockErrors.map((i) => ({
@@ -127,14 +154,7 @@ export class SalesService {
                     productName: i.productName,
                     message: `Estoque insuficiente para "${i.productName}". Disponível: ${i.stockAvailable}, solicitado: ${i.quantity}`,
                 })),
-                ...(dto.amountPaid !== undefined && dto.amountPaid < total
-                    ? [
-                        {
-                            type: 'INSUFFICIENT_PAYMENT',
-                            message: `Valor pago (R$ ${dto.amountPaid.toFixed(2)}) é menor que o total (R$ ${total.toFixed(2)}). Faltam R$ ${(total - dto.amountPaid).toFixed(2)}`,
-                        },
-                    ]
-                    : []),
+                ...paymentErrors,
             ],
             warnings: itemsWithDetails
                 .filter((i) => i.hasStock && i.willBelowMinStock)
@@ -149,21 +169,7 @@ export class SalesService {
 
     async create(dto: CreateSaleDto) {
         return this.prisma.$transaction(async (tx) => {
-            const paymentMethod = await tx.paymentMethod.findUnique({
-                where: { id: dto.paymentMethodId, active: true }
-            });
-
-            if (!paymentMethod) {
-                throw new BadRequestException('Método de pagamento não encontrado');
-            }
-
-            if (dto.installments && paymentMethod.code !== 'CREDIT_CARD') {
-                throw new BadRequestException('Parcelas são permitidas apenas para cartão de crédito');
-            }
-
-            if (!dto.installments && paymentMethod.code === 'CREDIT_CARD') {
-                throw new BadRequestException('Parcelas são obrigatórias para cartão de crédito');
-            }
+            const validatedPayments = await this.validatePayments(dto.payments, tx);
 
             const itemsWithDetails = await Promise.all(
                 dto.items.map(async (item) => {
@@ -188,25 +194,25 @@ export class SalesService {
             const discount = Math.round(dto.discount * 100) / 100;
             const total = Math.round((subtotal - discount) * 100) / 100;
 
-            if (dto.amountPaid < total) {
+            const amountPaid = Math.round(
+                validatedPayments.reduce((sum, p) => sum + p.amount, 0) * 100,
+            ) / 100;
+
+            if (amountPaid < total) {
                 throw new BadRequestException(
-                    `Valor pago (R$ ${dto.amountPaid.toFixed(2)}) é menor que o total (R$ ${total.toFixed(2)})`,
+                    `Valor pago (R$ ${amountPaid.toFixed(2)}) é menor que o total (R$ ${total.toFixed(2)})`,
                 );
             }
 
-            const change = Math.round((dto.amountPaid - total) * 100) / 100;
-            const installmentValue = dto.installments ? Math.round((total / dto.installments) * 100) / 100 : null;
+            const change = Math.round((amountPaid - total) * 100) / 100;
 
             const sale = await tx.sale.create({
                 data: {
                     total: subtotal,
                     discount,
                     finalTotal: total,
-                    amountPaid: dto.amountPaid,
+                    amountPaid,
                     change,
-                    paymentMethodId: dto.paymentMethodId,
-                    installments: dto.installments,
-                    installmentValue,
                     notes: dto.notes,
                     items: {
                         create: itemsWithDetails.map((i) => ({
@@ -216,10 +222,18 @@ export class SalesService {
                             subtotal: i.subtotal,
                         })),
                     },
+                    payments: {
+                        create: validatedPayments.map((p) => ({
+                            paymentMethodId: p.paymentMethodId,
+                            amount: p.amount,
+                            installments: p.installments,
+                            installmentValue: p.installmentValue,
+                        })),
+                    },
                 },
                 include: {
                     items: { include: { product: true } },
-                    paymentMethod: true,
+                    payments: { include: { paymentMethod: true } },
                 },
             });
 
@@ -238,7 +252,7 @@ export class SalesService {
 
     async findAll(page = 1, limit = 20, date?: string) {
         const skip = (page - 1) * limit;
-        
+
         let dateFilter = {};
         if (date) {
             const [year, month, day] = date.split('-').map(Number);
@@ -251,7 +265,7 @@ export class SalesService {
                 },
             };
         }
-        
+
         const [sales, total] = await Promise.all([
             this.prisma.sale.findMany({
                 where: dateFilter,
@@ -262,7 +276,7 @@ export class SalesService {
                     items: {
                         include: { product: { select: { id: true, name: true } } },
                     },
-                    paymentMethod: true,
+                    payments: { include: { paymentMethod: true } },
                 },
             }),
             this.prisma.sale.count({ where: dateFilter }),
@@ -283,7 +297,7 @@ export class SalesService {
                 items: {
                     include: { product: { include: { category: true, brand: true } } },
                 },
-                paymentMethod: true,
+                payments: { include: { paymentMethod: true } },
             },
         });
         if (!sale) throw new NotFoundException('Venda não encontrada');

@@ -14,8 +14,9 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { Roles } from 'src/decorators/roles.decorator';
 import { Role } from 'src/users/__enums__/role.enum';
 import { CreateProductDto } from './__dtos__/createProduct.dto';
-import { ReturnProductDto } from './__dtos__/returnProduct.dto';
+import { ReturnProductDto, ReturnProductColorDto } from './__dtos__/returnProduct.dto';
 import { UpdateProductDto } from './__dtos__/updateProduct.dto';
+import { CreateProductColorDto } from './__dtos__/createProductColor.dto';
 import { ProductsService } from './products.service';
 
 @Roles(Role.Admin)
@@ -65,5 +66,34 @@ export class ProductsController {
   @Delete(':id')
   async remove(@Param('id') id: string): Promise<ReturnProductDto> {
     return new ReturnProductDto(await this.productsService.remove(id));
+  }
+
+  @Post(':id/colors')
+  @UseInterceptors(FileInterceptor('image'))
+  async addColor(
+    @Param('id') id: string,
+    @Body() dto: CreateProductColorDto,
+    @UploadedFile() file?: Express.Multer.File,
+  ): Promise<ReturnProductColorDto> {
+    return new ReturnProductColorDto(await this.productsService.addColor(id, dto, file));
+  }
+
+  @Patch(':id/colors/:colorId')
+  @UseInterceptors(FileInterceptor('image'))
+  async updateColor(
+    @Param('id') id: string,
+    @Param('colorId') colorId: string,
+    @Body() dto: CreateProductColorDto,
+    @UploadedFile() file?: Express.Multer.File,
+  ): Promise<ReturnProductColorDto> {
+    return new ReturnProductColorDto(await this.productsService.updateColor(id, colorId, dto, file));
+  }
+
+  @Delete(':id/colors/:colorId')
+  async removeColor(
+    @Param('id') id: string,
+    @Param('colorId') colorId: string,
+  ): Promise<void> {
+    await this.productsService.removeColor(id, colorId);
   }
 }

@@ -7,6 +7,7 @@ import {
 import { PrismaService } from 'src/prisma.service';
 import { UploadService } from 'src/upload/upload.service';
 import { CreateProductDto } from './__dtos__/createProduct.dto';
+import { CreateProductColorDto } from './__dtos__/createProductColor.dto';
 import { UpdateProductDto } from './__dtos__/updateProduct.dto';
 import { generateInternalBarcode } from 'src/utils/barcode';
 
@@ -69,7 +70,7 @@ export class ProductsService {
 
             const createdProduct = await tx.product.findUnique({
                 where: { id: product.id },
-                include: { category: true, brand: true, supplier: true, stock: true },
+                include: { category: true, brand: true, supplier: true, stock: true, colors: { orderBy: { order: 'asc' } } },
             });
 
             if (!createdProduct) throw new NotFoundException('Erro ao criar produto');
@@ -93,6 +94,7 @@ export class ProductsService {
                 brand: true,
                 supplier: true,
                 stock: true,
+                colors: { orderBy: { order: 'asc' } },
             },
             orderBy: { name: 'asc' },
         });
@@ -101,7 +103,7 @@ export class ProductsService {
     async findOne(id: string) {
         const product = await this.prisma.product.findUnique({
             where: { id },
-            include: { category: true, brand: true, supplier: true, stock: true },
+            include: { category: true, brand: true, supplier: true, stock: true, colors: { orderBy: { order: 'asc' } } },
         });
         if (!product) throw new NotFoundException('Produto não encontrado');
         return product;
@@ -110,7 +112,7 @@ export class ProductsService {
     async findByBarcode(barcode: string) {
         const product = await this.prisma.product.findUnique({
             where: { barcode },
-            include: { category: true, brand: true, supplier: true, stock: true },
+            include: { category: true, brand: true, supplier: true, stock: true, colors: { orderBy: { order: 'asc' } } },
         });
         if (!product) throw new NotFoundException('Produto não encontrado para este código de barras');
         return product;
@@ -142,7 +144,7 @@ export class ProductsService {
                 ...productData,
                 ...(imageUrl && { imageUrl }),
             },
-            include: { category: true, brand: true, supplier: true, stock: true },
+            include: { category: true, brand: true, supplier: true, stock: true, colors: { orderBy: { order: 'asc' } } },
         });
     }
 
@@ -151,7 +153,7 @@ export class ProductsService {
         return this.prisma.product.update({ 
             where: { id }, 
             data: { active: false },
-            include: { category: true, brand: true, supplier: true, stock: true },
+            include: { category: true, brand: true, supplier: true, stock: true, colors: { orderBy: { order: 'asc' } } },
         });
     }
 
@@ -160,11 +162,68 @@ export class ProductsService {
             where: {
                 product: { active: true },
             },
-            include: { product: { include: { category: true, brand: true, supplier: true, stock: true } } },
+            include: { product: { include: { category: true, brand: true, supplier: true, stock: true, colors: { orderBy: { order: 'asc' } } } } },
         });
 
         return stocks
             .filter((s) => s.quantity <= s.minQuantity)
             .map((s) => s.product);
+    }
+
+    async addColor(productId: string, dto: CreateProductColorDto, file?: Express.Multer.File) {
+        await this.findOne(productId);
+
+        let imageUrl: string | undefined;
+        if (file) {
+            imageUrl = await this.uploadService.saveFile(file);
+        }
+
+        const maxOrder = await this.prisma.productColor.aggregate({
+            where: { productId },
+            _max: { order: true },
+        });
+
+        return this.prisma.productColor.create({
+            data: {
+                productId,
+                name: dto.name,
+                colorCode: dto.colorCode,
+                imageUrl,
+                order: (maxOrder._max.order ?? -1) + 1,
+            },
+        });
+    }
+
+    async updateColor(productId: string, colorId: string, dto: CreateProductColorDto, file?: Express.Multer.File) {
+        const color = await this.prisma.productColor.findFirst({ where: { id: colorId, productId } });
+        if (!color) throw new NotFoundException('Cor não encontrada');
+
+        let imageUrl: string | undefined;
+        if (file) {
+            imageUrl = await this.uploadService.saveFile(file);
+            if (color.imageUrl) {
+                await this.uploadService.deleteFile(color.imageUrl);
+            }
+        }
+
+        return this.prisma.productColor.update({
+            where: { id: colorId },
+            data: {
+                name: dto.name,
+                colorCode: dto.colorCode ?? color.colorCode,
+                ...(imageUrl && { imageUrl }),
+            },
+        });
+    }
+
+    async removeColor(productId: string, colorId: string) {
+        const color = await this.prisma.productColor.findFirst({ where: { id: colorId, productId } });
+        if (!color) throw new NotFoundException('Cor não encontrada');
+
+        if (color.imageUrl) {
+            await this.uploadService.deleteFile(color.imageUrl);
+        }
+
+        return this.prisma.productColor.delete({ where: { id: colorId } });
     }
 }

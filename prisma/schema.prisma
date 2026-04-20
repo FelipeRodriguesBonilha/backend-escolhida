@@ -73,11 +73,24 @@ model Product {
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
 
-  category  Category   @relation(fields: [categoryId], references: [id])
-  brand     Brand      @relation(fields: [brandId], references: [id])
-  supplier  Supplier?  @relation(fields: [supplierId], references: [id])
+  category  Category      @relation(fields: [categoryId], references: [id])
+  brand     Brand         @relation(fields: [brandId], references: [id])
+  supplier  Supplier?     @relation(fields: [supplierId], references: [id])
   stock     Stock?
   saleItems SaleItem[]
+  colors    ProductColor[]
+}
+
+model ProductColor {
+  id         String   @id @default(uuid())
+  productId  String
+  name       String
+  colorCode  String?
+  imageUrl   String?
+  order      Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id])
 }
 
 model Stock {
@@ -98,24 +111,33 @@ model PaymentMethod {
   order     Int      @default(0)
   createdAt DateTime @default(now())
 
-  sales Sale[]
+  salePayments SalePaymentMethod[]
 }
 
 model Sale {
-  id              String   @id @default(uuid())
-  total           Decimal  @db.Decimal(10, 2)
-  discount        Decimal  @db.Decimal(10, 2) @default(0)
-  finalTotal      Decimal  @db.Decimal(10, 2)
-  amountPaid      Decimal  @db.Decimal(10, 2)
-  change          Decimal  @db.Decimal(10, 2)
-  paymentMethodId String
-  installments    Int?
-  installmentValue Decimal? @db.Decimal(10, 2)
-  notes           String?
-  createdAt       DateTime @default(now())
+  id         String   @id @default(uuid())
+  total      Decimal  @db.Decimal(10, 2)
+  discount   Decimal  @db.Decimal(10, 2) @default(0)
+  finalTotal Decimal  @db.Decimal(10, 2)
+  amountPaid Decimal  @db.Decimal(10, 2)
+  change     Decimal  @db.Decimal(10, 2)
+  notes      String?
+  createdAt  DateTime @default(now())
 
+  payments SalePaymentMethod[]
+  items    SaleItem[]
+}
+
+model SalePaymentMethod {
+  id               String   @id @default(uuid())
+  saleId           String
+  paymentMethodId  String
+  amount           Decimal  @db.Decimal(10, 2)
+  installments     Int?
+  installmentValue Decimal? @db.Decimal(10, 2)
+
+  sale          Sale          @relation(fields: [saleId], references: [id])
   paymentMethod PaymentMethod @relation(fields: [paymentMethodId], references: [id])
-  items         SaleItem[]
 }
 
 model SaleItem {

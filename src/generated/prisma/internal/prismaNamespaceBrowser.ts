@@ -56,9 +56,11 @@ export const ModelName = {
   Category: 'Category',
   Brand: 'Brand',
   Product: 'Product',
+  ProductColor: 'ProductColor',
   Stock: 'Stock',
   PaymentMethod: 'PaymentMethod',
   Sale: 'Sale',
+  SalePaymentMethod: 'SalePaymentMethod',
   SaleItem: 'SaleItem'
 } as const
 
@@ -147,6 +149,19 @@ export const ProductScalarFieldEnum = {
 export type ProductScalarFieldEnum = (typeof ProductScalarFieldEnum)[keyof typeof ProductScalarFieldEnum]
 
 
+export const ProductColorScalarFieldEnum = {
+  id: 'id',
+  productId: 'productId',
+  name: 'name',
+  colorCode: 'colorCode',
+  imageUrl: 'imageUrl',
+  order: 'order',
+  createdAt: 'createdAt'
+} as const
+
+export type ProductColorScalarFieldEnum = (typeof ProductColorScalarFieldEnum)[keyof typeof ProductColorScalarFieldEnum]
+
+
 export const StockScalarFieldEnum = {
   id: 'id',
   productId: 'productId',
@@ -177,14 +192,23 @@ export const SaleScalarFieldEnum = {
   finalTotal: 'finalTotal',
   amountPaid: 'amountPaid',
   change: 'change',
-  paymentMethodId: 'paymentMethodId',
-  installments: 'installments',
-  installmentValue: 'installmentValue',
   notes: 'notes',
   createdAt: 'createdAt'
 } as const
 
 export type SaleScalarFieldEnum = (typeof SaleScalarFieldEnum)[keyof typeof SaleScalarFieldEnum]
+
+
+export const SalePaymentMethodScalarFieldEnum = {
+  id: 'id',
+  saleId: 'saleId',
+  paymentMethodId: 'paymentMethodId',
+  amount: 'amount',
+  installments: 'installments',
+  installmentValue: 'installmentValue'
+} as const
+
+export type SalePaymentMethodScalarFieldEnum = (typeof SalePaymentMethodScalarFieldEnum)[keyof typeof SalePaymentMethodScalarFieldEnum]
 
 
 export const SaleItemScalarFieldEnum = {

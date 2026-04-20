@@ -43,6 +43,11 @@ export type Brand = Prisma.BrandModel
  */
 export type Product = Prisma.ProductModel
 /**
+ * Model ProductColor
+ * 
+ */
+export type ProductColor = Prisma.ProductColorModel
+/**
  * Model Stock
  * 
  */
@@ -57,6 +62,11 @@ export type PaymentMethod = Prisma.PaymentMethodModel
  * 
  */
 export type Sale = Prisma.SaleModel
+/**
+ * Model SalePaymentMethod
+ * 
+ */
+export type SalePaymentMethod = Prisma.SalePaymentMethodModel
 /**
  * Model SaleItem
  * 

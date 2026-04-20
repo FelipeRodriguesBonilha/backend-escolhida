@@ -389,9 +389,11 @@ export const ModelName = {
   Category: 'Category',
   Brand: 'Brand',
   Product: 'Product',
+  ProductColor: 'ProductColor',
   Stock: 'Stock',
   PaymentMethod: 'PaymentMethod',
   Sale: 'Sale',
+  SalePaymentMethod: 'SalePaymentMethod',
   SaleItem: 'SaleItem'
 } as const
 
@@ -408,7 +410,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "supplier" | "category" | "brand" | "product" | "stock" | "paymentMethod" | "sale" | "saleItem"
+    modelProps: "user" | "supplier" | "category" | "brand" | "product" | "productColor" | "stock" | "paymentMethod" | "sale" | "salePaymentMethod" | "saleItem"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -782,6 +784,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    ProductColor: {
+      payload: Prisma.$ProductColorPayload<ExtArgs>
+      fields: Prisma.ProductColorFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ProductColorFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProductColorPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ProductColorFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProductColorPayload>
+        }
+        findFirst: {
+          args: Prisma.ProductColorFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProductColorPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ProductColorFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProductColorPayload>
+        }
+        findMany: {
+          args: Prisma.ProductColorFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProductColorPayload>[]
+        }
+        create: {
+          args: Prisma.ProductColorCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProductColorPayload>
+        }
+        createMany: {
+          args: Prisma.ProductColorCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ProductColorCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProductColorPayload>[]
+        }
+        delete: {
+          args: Prisma.ProductColorDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProductColorPayload>
+        }
+        update: {
+          args: Prisma.ProductColorUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProductColorPayload>
+        }
+        deleteMany: {
+          args: Prisma.ProductColorDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ProductColorUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ProductColorUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProductColorPayload>[]
+        }
+        upsert: {
+          args: Prisma.ProductColorUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProductColorPayload>
+        }
+        aggregate: {
+          args: Prisma.ProductColorAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateProductColor>
+        }
+        groupBy: {
+          args: Prisma.ProductColorGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ProductColorGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ProductColorCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ProductColorCountAggregateOutputType> | number
+        }
+      }
+    }
     Stock: {
       payload: Prisma.$StockPayload<ExtArgs>
       fields: Prisma.StockFieldRefs
@@ -1004,6 +1080,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    SalePaymentMethod: {
+      payload: Prisma.$SalePaymentMethodPayload<ExtArgs>
+      fields: Prisma.SalePaymentMethodFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.SalePaymentMethodFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SalePaymentMethodPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.SalePaymentMethodFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SalePaymentMethodPayload>
+        }
+        findFirst: {
+          args: Prisma.SalePaymentMethodFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SalePaymentMethodPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.SalePaymentMethodFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SalePaymentMethodPayload>
+        }
+        findMany: {
+          args: Prisma.SalePaymentMethodFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SalePaymentMethodPayload>[]
+        }
+        create: {
+          args: Prisma.SalePaymentMethodCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SalePaymentMethodPayload>
+        }
+        createMany: {
+          args: Prisma.SalePaymentMethodCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.SalePaymentMethodCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SalePaymentMethodPayload>[]
+        }
+        delete: {
+          args: Prisma.SalePaymentMethodDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SalePaymentMethodPayload>
+        }
+        update: {
+          args: Prisma.SalePaymentMethodUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SalePaymentMethodPayload>
+        }
+        deleteMany: {
+          args: Prisma.SalePaymentMethodDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.SalePaymentMethodUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.SalePaymentMethodUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SalePaymentMethodPayload>[]
+        }
+        upsert: {
+          args: Prisma.SalePaymentMethodUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SalePaymentMethodPayload>
+        }
+        aggregate: {
+          args: Prisma.SalePaymentMethodAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateSalePaymentMethod>
+        }
+        groupBy: {
+          args: Prisma.SalePaymentMethodGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.SalePaymentMethodGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.SalePaymentMethodCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.SalePaymentMethodCountAggregateOutputType> | number
+        }
+      }
+    }
     SaleItem: {
       payload: Prisma.$SaleItemPayload<ExtArgs>
       fields: Prisma.SaleItemFieldRefs
@@ -1186,6 +1336,19 @@ export const ProductScalarFieldEnum = {
 export type ProductScalarFieldEnum = (typeof ProductScalarFieldEnum)[keyof typeof ProductScalarFieldEnum]
 
 
+export const ProductColorScalarFieldEnum = {
+  id: 'id',
+  productId: 'productId',
+  name: 'name',
+  colorCode: 'colorCode',
+  imageUrl: 'imageUrl',
+  order: 'order',
+  createdAt: 'createdAt'
+} as const
+
+export type ProductColorScalarFieldEnum = (typeof ProductColorScalarFieldEnum)[keyof typeof ProductColorScalarFieldEnum]
+
+
 export const StockScalarFieldEnum = {
   id: 'id',
   productId: 'productId',
@@ -1216,14 +1379,23 @@ export const SaleScalarFieldEnum = {
   finalTotal: 'finalTotal',
   amountPaid: 'amountPaid',
   change: 'change',
-  paymentMethodId: 'paymentMethodId',
-  installments: 'installments',
-  installmentValue: 'installmentValue',
   notes: 'notes',
   createdAt: 'createdAt'
 } as const
 
 export type SaleScalarFieldEnum = (typeof SaleScalarFieldEnum)[keyof typeof SaleScalarFieldEnum]
+
+
+export const SalePaymentMethodScalarFieldEnum = {
+  id: 'id',
+  saleId: 'saleId',
+  paymentMethodId: 'paymentMethodId',
+  amount: 'amount',
+  installments: 'installments',
+  installmentValue: 'installmentValue'
+} as const
+
+export type SalePaymentMethodScalarFieldEnum = (typeof SalePaymentMethodScalarFieldEnum)[keyof typeof SalePaymentMethodScalarFieldEnum]
 
 
 export const SaleItemScalarFieldEnum = {
@@ -1458,9 +1630,11 @@ export type GlobalOmitConfig = {
   category?: Prisma.CategoryOmit
   brand?: Prisma.BrandOmit
   product?: Prisma.ProductOmit
+  productColor?: Prisma.ProductColorOmit
   stock?: Prisma.StockOmit
   paymentMethod?: Prisma.PaymentMethodOmit
   sale?: Prisma.SaleOmit
+  salePaymentMethod?: Prisma.SalePaymentMethodOmit
   saleItem?: Prisma.SaleItemOmit
 }
 
