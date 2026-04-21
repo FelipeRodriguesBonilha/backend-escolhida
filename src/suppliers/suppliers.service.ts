@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { CreateSupplierDto } from './__dtos__/createSupplier.dto';
 import { UpdateSupplierDto } from './__dtos__/updateSupplier.dto';
@@ -15,11 +15,24 @@ export class SuppliersService {
         return this.prisma.supplier.create({ data: dto });
     }
 
-    async findAll() {
-        return this.prisma.supplier.findMany({
-            where: { active: true },
-            orderBy: { name: 'asc' },
-        });
+    async findAll(page: number = 1, limit: number = 10, search?: string, showInactive: boolean = false) {
+        const skip = (page - 1) * limit;
+        const where = {
+            active: !showInactive,
+            ...(search && { name: { contains: search, mode: 'insensitive' as const } }),
+        };
+        const [data, total] = await Promise.all([
+            this.prisma.supplier.findMany({ where, orderBy: { name: 'asc' }, skip, take: limit }),
+            this.prisma.supplier.count({ where }),
+        ]);
+        return { data, total, page, limit };
+    }
+
+    async permanentDelete(id: string) {
+        const supplier = await this.findOne(id);
+        if (supplier.active) throw new BadRequestException('Apenas fornecedores inativos podem ser excluídos permanentemente');
+        await this.prisma.product.updateMany({ where: { supplierId: id }, data: { supplierId: null } });
+        return this.prisma.supplier.delete({ where: { id } });
     }
 
     async findOne(id: string) {
@@ -39,5 +52,10 @@ export class SuppliersService {
     async remove(id: string) {
         await this.findOne(id);
         return this.prisma.supplier.update({ where: { id }, data: { active: false } });
+    }
+
+    async reactivate(id: string) {
+        await this.findOne(id);
+        return this.prisma.supplier.update({ where: { id }, data: { active: true } });
     }
 }

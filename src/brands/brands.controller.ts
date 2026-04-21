@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { Roles } from 'src/decorators/roles.decorator';
 import { Role } from 'src/users/__enums__/role.enum';
 import { CreateBrandDto } from './__dtos__/createBrand.dto';
@@ -17,8 +17,19 @@ export class BrandsController {
     }
 
     @Get()
-    async findAll(): Promise<ReturnBrandDto[]> {
-        return (await this.brandsService.findAll()).map(brand => new ReturnBrandDto(brand));
+    async findAll(
+        @Query('page') page?: string,
+        @Query('limit') limit?: string,
+        @Query('search') search?: string,
+        @Query('showInactive') showInactive?: string,
+    ) {
+        const result = await this.brandsService.findAll(
+            parseInt(page ?? '1') || 1,
+            parseInt(limit ?? '10') || 10,
+            search,
+            showInactive === 'true',
+        );
+        return { ...result, data: result.data.map(b => new ReturnBrandDto(b)) };
     }
 
     @Get(':id')
@@ -34,5 +45,16 @@ export class BrandsController {
     @Delete(':id')
     async remove(@Param('id') id: string): Promise<ReturnBrandDto> {
         return new ReturnBrandDto(await this.brandsService.remove(id));
+    }
+
+    @Patch(':id/reactivate')
+    async reactivate(@Param('id') id: string): Promise<ReturnBrandDto> {
+        return new ReturnBrandDto(await this.brandsService.reactivate(id));
+    }
+
+    @Delete(':id/permanent')
+    async permanentDelete(@Param('id') id: string) {
+        await this.brandsService.permanentDelete(id);
+        return { message: 'Marca excluída permanentemente' };
     }
 }

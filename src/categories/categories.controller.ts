@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { Roles } from 'src/decorators/roles.decorator';
 import { Role } from 'src/users/__enums__/role.enum';
 import { CreateCategoryDto } from './__dtos__/createCategory.dto';
@@ -17,8 +17,19 @@ export class CategoriesController {
     }
 
     @Get()
-    async findAll(): Promise<ReturnCategoryDto[]> {
-        return (await this.categoriesService.findAll()).map(category => new ReturnCategoryDto(category));
+    async findAll(
+        @Query('page') page?: string,
+        @Query('limit') limit?: string,
+        @Query('search') search?: string,
+        @Query('showInactive') showInactive?: string,
+    ) {
+        const result = await this.categoriesService.findAll(
+            parseInt(page ?? '1') || 1,
+            parseInt(limit ?? '10') || 10,
+            search,
+            showInactive === 'true',
+        );
+        return { ...result, data: result.data.map(c => new ReturnCategoryDto(c)) };
     }
 
     @Get(':id')
@@ -34,5 +45,16 @@ export class CategoriesController {
     @Delete(':id')
     async remove(@Param('id') id: string): Promise<ReturnCategoryDto> {
         return new ReturnCategoryDto(await this.categoriesService.remove(id));
+    }
+
+    @Patch(':id/reactivate')
+    async reactivate(@Param('id') id: string): Promise<ReturnCategoryDto> {
+        return new ReturnCategoryDto(await this.categoriesService.reactivate(id));
+    }
+
+    @Delete(':id/permanent')
+    async permanentDelete(@Param('id') id: string) {
+        await this.categoriesService.permanentDelete(id);
+        return { message: 'Categoria excluída permanentemente' };
     }
 }

@@ -70,7 +70,7 @@ export class ProductsService {
 
             const createdProduct = await tx.product.findUnique({
                 where: { id: product.id },
-                include: { category: true, brand: true, supplier: true, stock: true, colors: { orderBy: { order: 'asc' } } },
+                include: { category: true, brand: true, supplier: true, stock: true, colors: { orderBy: { order: 'asc' as const } } },
             });
 
             if (!createdProduct) throw new NotFoundException('Erro ao criar produto');
@@ -78,26 +78,31 @@ export class ProductsService {
         });
     }
 
-    async findAll(search?: string) {
-        return this.prisma.product.findMany({
-            where: {
-                active: true,
-                ...(search && {
-                    OR: [
-                        { name: { contains: search, mode: 'insensitive' } },
-                        { barcode: { contains: search } },
-                    ],
-                }),
-            },
-            include: {
-                category: true,
-                brand: true,
-                supplier: true,
-                stock: true,
-                colors: { orderBy: { order: 'asc' } },
-            },
-            orderBy: { name: 'asc' },
-        });
+    async findAll(search?: string, page: number = 1, limit: number = 20, showInactive: boolean = false) {
+        const skip = (page - 1) * limit;
+        const where = {
+            active: !showInactive,
+            ...(search && {
+                OR: [
+                    { name: { contains: search, mode: 'insensitive' as const } },
+                    { barcode: { contains: search } },
+                    { description: { contains: search, mode: 'insensitive' as const } },
+                    { category: { name: { contains: search, mode: 'insensitive' as const } } },
+                    { brand: { name: { contains: search, mode: 'insensitive' as const } } },
+                ],
+            }),
+        };
+        const [data, total] = await Promise.all([
+            this.prisma.product.findMany({
+                where,
+                include: { category: true, brand: true, supplier: true, stock: true, colors: { orderBy: { order: 'asc' as const } } },
+                orderBy: { name: 'asc' },
+                skip,
+                take: limit,
+            }),
+            this.prisma.product.count({ where }),
+        ]);
+        return { data, total, page, limit };
     }
 
     async findOne(id: string) {
@@ -154,6 +159,27 @@ export class ProductsService {
             where: { id }, 
             data: { active: false },
             include: { category: true, brand: true, supplier: true, stock: true, colors: { orderBy: { order: 'asc' } } },
+        });
+    }
+
+    async reactivate(id: string) {
+        await this.findOne(id);
+        return this.prisma.product.update({
+            where: { id },
+            data: { active: true },
+            include: { category: true, brand: true, supplier: true, stock: true, colors: { orderBy: { order: 'asc' } } },
+        });
+    }
+
+    async permanentDelete(id: string) {
+        const product = await this.findOne(id);
+        if (product.active) throw new BadRequestException('Apenas produtos inativos podem ser excluídos permanentemente');
+        const saleItemCount = await this.prisma.saleItem.count({ where: { productId: id } });
+        if (saleItemCount > 0) throw new BadRequestException(`Não é possível excluir: este produto possui ${saleItemCount} item(ns) em vendas`);
+        await this.prisma.$transaction(async (tx) => {
+            await tx.productColor.deleteMany({ where: { productId: id } });
+            await tx.stock.deleteMany({ where: { productId: id } });
+            await tx.product.delete({ where: { id } });
         });
     }
 

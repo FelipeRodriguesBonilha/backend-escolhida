@@ -34,8 +34,19 @@ export class ProductsController {
   }
 
   @Get()
-  async findAll(@Query('search') search?: string): Promise<ReturnProductDto[]> {
-    return (await this.productsService.findAll(search)).map(product => new ReturnProductDto(product));
+  async findAll(
+    @Query('search') search?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('showInactive') showInactive?: string,
+  ) {
+    const result = await this.productsService.findAll(
+      search,
+      parseInt(page ?? '1') || 1,
+      parseInt(limit ?? '20') || 20,
+      showInactive === 'true',
+    );
+    return { ...result, data: result.data.map(p => new ReturnProductDto(p)) };
   }
 
   @Get('low-stock')
@@ -66,6 +77,17 @@ export class ProductsController {
   @Delete(':id')
   async remove(@Param('id') id: string): Promise<ReturnProductDto> {
     return new ReturnProductDto(await this.productsService.remove(id));
+  }
+
+  @Patch(':id/reactivate')
+  async reactivate(@Param('id') id: string): Promise<ReturnProductDto> {
+    return new ReturnProductDto(await this.productsService.reactivate(id));
+  }
+
+  @Delete(':id/permanent')
+  async permanentDelete(@Param('id') id: string) {
+    await this.productsService.permanentDelete(id);
+    return { message: 'Produto excluído permanentemente' };
   }
 
   @Post(':id/colors')

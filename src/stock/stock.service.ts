@@ -10,20 +10,27 @@ import { AdjustStockDto } from './__dtos__/adjustStock.dto';
 export class StockService {
     constructor(private prisma: PrismaService) { }
 
-    async findAll() {
-        return this.prisma.stock.findMany({
-            where: {
-                product: {
-                    active: true
-                }
+    async findAll(page: number = 1, limit: number = 10, search?: string, showInactive: boolean = false) {
+        const skip = (page - 1) * limit;
+        const where = {
+            product: {
+                active: !showInactive,
+                ...(search && {
+                    OR: [
+                        { name: { contains: search, mode: 'insensitive' as const } },
+                        { barcode: { contains: search } },
+                        { category: { name: { contains: search, mode: 'insensitive' as const } } },
+                        { brand: { name: { contains: search, mode: 'insensitive' as const } } },
+                    ],
+                }),
             },
-            include: {
-                product: {
-                    include: { category: true, brand: true },
-                },
-            },
-            orderBy: { product: { name: 'asc' } },
-        });
+        };
+        const include = { product: { include: { category: true, brand: true } } };
+        const [data, total] = await Promise.all([
+            this.prisma.stock.findMany({ where, include, orderBy: { product: { name: 'asc' } }, skip, take: limit }),
+            this.prisma.stock.count({ where }),
+        ]);
+        return { data, total, page, limit };
     }
 
     async findByProduct(productId: string) {
@@ -35,6 +42,19 @@ export class StockService {
         });
         if (!stock) throw new NotFoundException('Estoque não encontrado para este produto');
         return stock;
+    }
+
+    async permanentDeleteByProduct(productId: string) {
+        const stock = await this.prisma.stock.findUnique({ where: { productId }, include: { product: true } });
+        if (!stock) throw new NotFoundException('Estoque não encontrado');
+        if (stock.product.active) throw new BadRequestException('Apenas produtos inativos podem ser excluídos permanentemente');
+        const saleItemCount = await this.prisma.saleItem.count({ where: { productId } });
+        if (saleItemCount > 0) throw new BadRequestException(`Não é possível excluir: este produto possui ${saleItemCount} item(ns) em vendas`);
+        await this.prisma.$transaction(async (tx) => {
+            await tx.productColor.deleteMany({ where: { productId } });
+            await tx.stock.delete({ where: { productId } });
+            await tx.product.delete({ where: { id: productId } });
+        });
     }
 
     async adjust(productId: string, dto: AdjustStockDto) {

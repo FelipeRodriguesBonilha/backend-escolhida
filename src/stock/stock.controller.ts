@@ -1,9 +1,11 @@
 import {
     Body,
     Controller,
+    Delete,
     Get,
     Param,
-    Post
+    Post,
+    Query
 } from '@nestjs/common';
 import { Roles } from 'src/decorators/roles.decorator';
 import { Role } from 'src/users/__enums__/role.enum';
@@ -17,8 +19,19 @@ export class StockController {
     constructor(private readonly stockService: StockService) { }
 
     @Get()
-    async findAll(): Promise<ReturnStockDto[]> {
-        return (await this.stockService.findAll()).map(stock => new ReturnStockDto(stock));
+    async findAll(
+        @Query('page') page?: string,
+        @Query('limit') limit?: string,
+        @Query('search') search?: string,
+        @Query('showInactive') showInactive?: string,
+    ) {
+        const result = await this.stockService.findAll(
+            parseInt(page ?? '1') || 1,
+            parseInt(limit ?? '10') || 10,
+            search,
+            showInactive === 'true',
+        );
+        return { ...result, data: result.data.map(s => new ReturnStockDto(s)) };
     }
 
     @Get('low-stock')
@@ -37,5 +50,11 @@ export class StockController {
         @Body() dto: AdjustStockDto,
     ): Promise<ReturnStockDto> {
         return new ReturnStockDto(await this.stockService.adjust(productId, dto));
+    }
+
+    @Delete('product/:productId/permanent')
+    async permanentDelete(@Param('productId') productId: string) {
+        await this.stockService.permanentDeleteByProduct(productId);
+        return { message: 'Produto excluído permanentemente' };
     }
 }
