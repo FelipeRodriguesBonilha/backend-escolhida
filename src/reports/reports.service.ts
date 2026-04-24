@@ -59,7 +59,7 @@ export class ReportsService {
 
         const topProducts = Object.entries(productMap)
             .map(([id, data]) => ({ productId: id, ...data }))
-            .sort((a, b) => b.quantity - a.quantity)
+            .sort((a, b) => b.revenue - a.revenue)
             .slice(0, 10);
 
         return {
@@ -178,7 +178,7 @@ export class ReportsService {
         };
     }
 
-    async topProductsCurrentMonth(limit: number = 15) {
+    async topProductsCurrentMonth(limit: number = 10) {
         const now = new Date();
         const year = now.getFullYear();
         const month = now.getMonth() + 1;
@@ -211,7 +211,7 @@ export class ReportsService {
 
         const topProducts = Object.entries(productMap)
             .map(([id, data]) => ({ productId: id, ...data }))
-            .sort((a, b) => b.quantity - a.quantity)
+            .sort((a, b) => b.revenue - a.revenue)
             .slice(0, limit);
 
         return {
