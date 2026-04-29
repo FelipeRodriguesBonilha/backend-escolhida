@@ -17,6 +17,11 @@ enum UserRole {
   ADMIN
 }
 
+enum CashRegisterStatus {
+  OPEN
+  CLOSED
+}
+
 model User {
   id        String   @id @default(uuid())
   name      String
@@ -150,4 +155,29 @@ model SaleItem {
 
   sale    Sale    @relation(fields: [saleId], references: [id])
   product Product @relation(fields: [productId], references: [id])
+}
+
+model CashRegister {
+  id             String              @id @default(uuid())
+  openedAt       DateTime            @default(now())
+  closedAt       DateTime?
+  initialAmount  Decimal             @db.Decimal(10, 2)
+  finalAmount    Decimal?            @db.Decimal(10, 2)
+  expectedAmount Decimal?            @db.Decimal(10, 2)
+  difference     Decimal?            @db.Decimal(10, 2)
+  status         CashRegisterStatus  @default(OPEN)
+  notes          String?
+  closingNotes   String?
+
+  bleeds CashBleed[]
+}
+
+model CashBleed {
+  id             String       @id @default(uuid())
+  cashRegisterId String
+  amount         Decimal      @db.Decimal(10, 2)
+  reason         String
+  createdAt      DateTime     @default(now())
+
+  cashRegister CashRegister @relation(fields: [cashRegisterId], references: [id])
 }

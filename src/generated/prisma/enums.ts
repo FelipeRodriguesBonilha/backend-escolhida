@@ -14,3 +14,11 @@ export const UserRole = {
 } as const
 
 export type UserRole = (typeof UserRole)[keyof typeof UserRole]
+
+
+export const CashRegisterStatus = {
+  OPEN: 'OPEN',
+  CLOSED: 'CLOSED'
+} as const
+
+export type CashRegisterStatus = (typeof CashRegisterStatus)[keyof typeof CashRegisterStatus]

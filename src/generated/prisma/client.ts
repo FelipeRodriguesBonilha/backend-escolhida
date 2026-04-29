@@ -94,3 +94,13 @@ export type SalePaymentMethod = Prisma.SalePaymentMethodModel
  * 
  */
 export type SaleItem = Prisma.SaleItemModel
+/**
+ * Model CashRegister
+ * 
+ */
+export type CashRegister = Prisma.CashRegisterModel
+/**
+ * Model CashBleed
+ * 
+ */
+export type CashBleed = Prisma.CashBleedModel
