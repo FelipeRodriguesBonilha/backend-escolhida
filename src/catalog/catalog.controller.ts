@@ -17,6 +17,7 @@ export class CatalogController {
         @Query('page') page?: string,
         @Query('limit') limit?: string,
         @Query('categoryId') categoryId?: string,
+        @Query('brandId') brandId?: string,
     ) {
         const pageNum = parseInt(page ?? '1') || 1;
         const limitNum = parseInt(limit ?? '50') || 50;
@@ -25,6 +26,7 @@ export class CatalogController {
         const where: any = {
             active: true,
             ...(categoryId && { categoryId }),
+            ...(brandId && { brandId }),
             ...(search && {
                 OR: [
                     { name: { contains: search, mode: 'insensitive' as const } },
@@ -62,6 +64,20 @@ export class CatalogController {
         return this.prisma.category.findMany({
             orderBy: { name: 'asc' },
         });
+    }
+
+    @Get('brands')
+    async getBrands(@Query('categoryId') categoryId?: string) {
+        const where: any = { active: true, ...(categoryId && { categoryId }) };
+        const products = await this.prisma.product.findMany({
+            where,
+            select: { brand: true },
+            distinct: ['brandId'],
+        });
+        return products
+            .map(p => p.brand)
+            .filter(Boolean)
+            .sort((a, b) => a!.name.localeCompare(b!.name));
     }
 
     @Get('uploads/:filename')
