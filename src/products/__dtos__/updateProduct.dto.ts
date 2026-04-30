@@ -12,4 +12,13 @@ export class UpdateProductDto extends PartialType(CreateProductDto) {
         return value;
     })
     active?: boolean;
+
+    @IsOptional()
+    @IsBoolean()
+    @Transform(({ value }) => {
+        if (value === 'true') return true;
+        if (value === 'false') return false;
+        return value;
+    })
+    removeImage?: boolean;
 }

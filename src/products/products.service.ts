@@ -133,21 +133,24 @@ export class ProductsService {
             if (exists) throw new ConflictException('Código de barras já cadastrado em outro produto');
         }
 
-        const { initialStock, minQuantity, ...productData } = dto;
+        const { initialStock, minQuantity, removeImage, ...productData } = dto;
 
-        let imageUrl: string | undefined;
+        let imageUrl: string | undefined | null;
         if (file) {
             imageUrl = await this.uploadService.saveFile(file);
             if (product.imageUrl) {
                 await this.uploadService.deleteFile(product.imageUrl);
             }
+        } else if (dto.removeImage && product.imageUrl) {
+            await this.uploadService.deleteFile(product.imageUrl);
+            imageUrl = null;
         }
 
         return this.prisma.product.update({
             where: { id },
             data: {
                 ...productData,
-                ...(imageUrl && { imageUrl }),
+                ...(imageUrl !== undefined && { imageUrl }),
             },
             include: { category: true, brand: true, supplier: true, stock: true, colors: { orderBy: { order: 'asc' } } },
         });
@@ -224,12 +227,15 @@ export class ProductsService {
         const color = await this.prisma.productColor.findFirst({ where: { id: colorId, productId } });
         if (!color) throw new NotFoundException('Cor não encontrada');
 
-        let imageUrl: string | undefined;
+        let imageUrl: string | undefined | null;
         if (file) {
             imageUrl = await this.uploadService.saveFile(file);
             if (color.imageUrl) {
                 await this.uploadService.deleteFile(color.imageUrl);
             }
+        } else if (dto.removeImage && color.imageUrl) {
+            await this.uploadService.deleteFile(color.imageUrl);
+            imageUrl = null;
         }
 
         return this.prisma.productColor.update({
@@ -237,7 +243,7 @@ export class ProductsService {
             data: {
                 name: dto.name,
                 colorCode: dto.colorCode ?? color.colorCode,
-                ...(imageUrl && { imageUrl }),
+                ...(imageUrl !== undefined && { imageUrl }),
             },
         });
     }
