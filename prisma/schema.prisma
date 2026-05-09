@@ -120,17 +120,19 @@ model PaymentMethod {
 }
 
 model Sale {
-  id         String   @id @default(uuid())
-  total      Decimal  @db.Decimal(10, 2)
-  discount   Decimal  @db.Decimal(10, 2) @default(0)
-  finalTotal Decimal  @db.Decimal(10, 2)
-  amountPaid Decimal  @db.Decimal(10, 2)
-  change     Decimal  @db.Decimal(10, 2)
-  notes      String?
-  createdAt  DateTime @default(now())
+  id             String   @id @default(uuid())
+  total          Decimal  @db.Decimal(10, 2)
+  discount       Decimal  @db.Decimal(10, 2) @default(0)
+  finalTotal     Decimal  @db.Decimal(10, 2)
+  amountPaid     Decimal  @db.Decimal(10, 2)
+  change         Decimal  @db.Decimal(10, 2)
+  notes          String?
+  createdAt      DateTime @default(now())
+  cashRegisterId String?
 
-  payments SalePaymentMethod[]
-  items    SaleItem[]
+  payments  SalePaymentMethod[]
+  items     SaleItem[]
+  cashRegister CashRegister? @relation(fields: [cashRegisterId], references: [id])
 }
 
 model SalePaymentMethod {
@@ -163,13 +165,13 @@ model CashRegister {
   closedAt       DateTime?
   initialAmount  Decimal             @db.Decimal(10, 2)
   finalAmount    Decimal?            @db.Decimal(10, 2)
-  expectedAmount Decimal?            @db.Decimal(10, 2)
-  difference     Decimal?            @db.Decimal(10, 2)
   status         CashRegisterStatus  @default(OPEN)
   notes          String?
   closingNotes   String?
 
-  bleeds CashBleed[]
+  bleeds     CashBleed[]
+  entries    CashEntry[]
+  sales      Sale[]
 }
 
 model CashBleed {
@@ -177,6 +179,16 @@ model CashBleed {
   cashRegisterId String
   amount         Decimal      @db.Decimal(10, 2)
   reason         String
+  createdAt      DateTime     @default(now())
+
+  cashRegister CashRegister @relation(fields: [cashRegisterId], references: [id])
+}
+
+model CashEntry {
+  id             String       @id @default(uuid())
+  cashRegisterId String
+  amount         Decimal      @db.Decimal(10, 2)
+  description    String
   createdAt      DateTime     @default(now())
 
   cashRegister CashRegister @relation(fields: [cashRegisterId], references: [id])
