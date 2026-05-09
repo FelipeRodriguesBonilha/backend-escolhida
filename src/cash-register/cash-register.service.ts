@@ -2,15 +2,38 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { PrismaService } from 'src/prisma.service';
 import { CloseCashRegisterDto } from './__dtos__/close-cash-register.dto';
 import { CreateCashBleedDto } from './__dtos__/create-cash-bleed.dto';
+import { CreateCashEntryDto } from './__dtos__/create-cash-entry.dto';
 import { OpenCashRegisterDto } from './__dtos__/open-cash-register.dto';
 
 @Injectable()
 export class CashRegisterService {
   constructor(private prisma: PrismaService) {}
 
-  private includeQuery = { bleeds: { orderBy: { createdAt: 'desc' as const } } };
+  private includeQuery = {
+    bleeds: {
+      orderBy: { createdAt: 'asc' as const },
+    },
+    entries: {
+      orderBy: { createdAt: 'asc' as const },
+    },
+    sales: {
+      include: {
+        payments: {
+          include: {
+            paymentMethod: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' as const },
+    },
+  };
 
   async open(dto: OpenCashRegisterDto) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
     const existing = await this.prisma.cashRegister.findFirst({
       where: { status: 'OPEN' },
     });
@@ -19,12 +42,44 @@ export class CashRegisterService {
       throw new BadRequestException('Já existe um caixa aberto. Feche-o antes de abrir um novo.');
     }
 
-    return this.prisma.cashRegister.create({
-      data: {
-        initialAmount: dto.initialAmount,
-        notes: dto.notes,
+    const todayRegister = await this.prisma.cashRegister.findFirst({
+      where: {
+        openedAt: {
+          gte: today,
+          lt: tomorrow,
+        },
       },
-      include: this.includeQuery,
+    });
+
+    if (todayRegister) {
+      throw new BadRequestException('Já existe um caixa aberto hoje. Só é permitido um caixa por dia.');
+    }
+
+    return await this.prisma.$transaction(async (tx) => {
+      const cashRegister = await tx.cashRegister.create({
+        data: {
+          initialAmount: dto.initialAmount,
+          notes: dto.notes,
+        },
+        include: this.includeQuery,
+      });
+
+      if (dto.entries && dto.entries.length > 0) {
+        for (const entry of dto.entries) {
+          await tx.cashEntry.create({
+            data: {
+              cashRegisterId: cashRegister.id,
+              amount: entry.amount,
+              description: entry.description,
+            },
+          });
+        }
+      }
+
+      return tx.cashRegister.findUnique({
+        where: { id: cashRegister.id },
+        include: this.includeQuery,
+      });
     });
   }
 
@@ -38,17 +93,19 @@ export class CashRegisterService {
     if (cashRegister.status === 'CLOSED') throw new BadRequestException('Este caixa já está fechado.');
 
     const totalBleeds = cashRegister.bleeds.reduce((sum, b) => sum + Number(b.amount), 0);
-    const expectedAmount = Number(cashRegister.initialAmount) - totalBleeds;
-    const difference = dto.finalAmount - expectedAmount;
+    const totalEntries = cashRegister.entries.reduce((sum, e) => sum + Number(e.amount), 0);
+    const totalCashSales = cashRegister.sales
+      .filter(sale => sale.payments.some(payment => payment.paymentMethod.code === 'CASH'))
+      .reduce((sum, sale) => sum + Number(sale.finalTotal), 0);
+    
+    const finalAmount = Number(cashRegister.initialAmount) + totalEntries + totalCashSales - totalBleeds;
 
     return this.prisma.cashRegister.update({
       where: { id },
       data: {
         status: 'CLOSED',
         closedAt: new Date(),
-        finalAmount: dto.finalAmount,
-        expectedAmount,
-        difference,
+        finalAmount,
         closingNotes: dto.closingNotes,
       },
       include: this.includeQuery,
@@ -66,6 +123,36 @@ export class CashRegisterService {
         cashRegisterId: id,
         amount: dto.amount,
         reason: dto.reason,
+      },
+    });
+  }
+
+  async addEntry(id: string, dto: CreateCashEntryDto) {
+    const cashRegister = await this.prisma.cashRegister.findUnique({ where: { id } });
+
+    if (!cashRegister) throw new NotFoundException('Caixa não encontrado.');
+    if (cashRegister.status === 'CLOSED') throw new BadRequestException('Não é possível adicionar entrada em caixa fechado.');
+
+    return this.prisma.cashEntry.create({
+      data: {
+        cashRegisterId: id,
+        amount: dto.amount,
+        description: dto.description,
+      },
+    });
+  }
+
+  async linkSaleToCurrentCashRegister(saleId: string) {
+    const currentCashRegister = await this.findCurrent();
+    
+    if (!currentCashRegister) {
+      throw new BadRequestException('Não há caixa aberto no momento.');
+    }
+
+    return this.prisma.sale.update({
+      where: { id: saleId },
+      data: {
+        cashRegisterId: currentCashRegister.id,
       },
     });
   }

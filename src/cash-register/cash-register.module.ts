@@ -6,5 +6,6 @@ import { CashRegisterService } from './cash-register.service';
 @Module({
   controllers: [CashRegisterController],
   providers: [CashRegisterService, PrismaService],
+  exports: [CashRegisterService],
 })
 export class CashRegisterModule {}

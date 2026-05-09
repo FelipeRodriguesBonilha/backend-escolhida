@@ -63,7 +63,8 @@ export const ModelName = {
   SalePaymentMethod: 'SalePaymentMethod',
   SaleItem: 'SaleItem',
   CashRegister: 'CashRegister',
-  CashBleed: 'CashBleed'
+  CashBleed: 'CashBleed',
+  CashEntry: 'CashEntry'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -195,7 +196,8 @@ export const SaleScalarFieldEnum = {
   amountPaid: 'amountPaid',
   change: 'change',
   notes: 'notes',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  cashRegisterId: 'cashRegisterId'
 } as const
 
 export type SaleScalarFieldEnum = (typeof SaleScalarFieldEnum)[keyof typeof SaleScalarFieldEnum]
@@ -231,8 +233,6 @@ export const CashRegisterScalarFieldEnum = {
   closedAt: 'closedAt',
   initialAmount: 'initialAmount',
   finalAmount: 'finalAmount',
-  expectedAmount: 'expectedAmount',
-  difference: 'difference',
   status: 'status',
   notes: 'notes',
   closingNotes: 'closingNotes'
@@ -250,6 +250,17 @@ export const CashBleedScalarFieldEnum = {
 } as const
 
 export type CashBleedScalarFieldEnum = (typeof CashBleedScalarFieldEnum)[keyof typeof CashBleedScalarFieldEnum]
+
+
+export const CashEntryScalarFieldEnum = {
+  id: 'id',
+  cashRegisterId: 'cashRegisterId',
+  amount: 'amount',
+  description: 'description',
+  createdAt: 'createdAt'
+} as const
+
+export type CashEntryScalarFieldEnum = (typeof CashEntryScalarFieldEnum)[keyof typeof CashEntryScalarFieldEnum]
 
 
 export const SortOrder = {
