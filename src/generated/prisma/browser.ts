@@ -82,3 +82,8 @@ export type CashRegister = Prisma.CashRegisterModel
  * 
  */
 export type CashBleed = Prisma.CashBleedModel
+/**
+ * Model CashEntry
+ * 
+ */
+export type CashEntry = Prisma.CashEntryModel

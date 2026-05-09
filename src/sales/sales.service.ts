@@ -6,10 +6,14 @@ import {
 import { PrismaService } from 'src/prisma.service';
 import { CreateSaleDto } from './__dtos__/createSale.dto';
 import { SimulateSaleDto } from './__dtos__/simulateSale.dto';
+import { CashRegisterService } from '../cash-register/cash-register.service';
 
 @Injectable()
 export class SalesService {
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+        private cashRegisterService: CashRegisterService
+    ) { }
 
     private async validateItemWithStock(
         item: { productId: string; quantity: number },
@@ -206,6 +210,9 @@ export class SalesService {
 
             const change = Math.round((amountPaid - total) * 100) / 100;
 
+            // Verificar se há caixa aberto e vincular a venda
+            const currentCashRegister = await this.cashRegisterService.findCurrent();
+            
             const sale = await tx.sale.create({
                 data: {
                     total: subtotal,
@@ -214,6 +221,7 @@ export class SalesService {
                     amountPaid,
                     change,
                     notes: dto.notes,
+                    cashRegisterId: currentCashRegister?.id || null,
                     items: {
                         create: itemsWithDetails.map((i) => ({
                             productId: i.product.id,
