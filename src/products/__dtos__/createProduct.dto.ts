@@ -1,5 +1,6 @@
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
+    IsBoolean,
     IsInt,
     IsNumber,
     IsOptional,
@@ -55,4 +56,13 @@ export class CreateProductDto {
     @IsInt()
     @Min(0)
     minQuantity?: number;
+
+    @IsOptional()
+    @IsBoolean()
+    @Transform(({ value }) => {
+        if (value === 'true') return true;
+        if (value === 'false') return false;
+        return value;
+    })
+    showInCatalog?: boolean;
 }
