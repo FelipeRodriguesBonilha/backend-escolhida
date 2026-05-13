@@ -25,6 +25,7 @@ export class CatalogController {
 
         const where: any = {
             active: true,
+            showInCatalog: true,
             ...(categoryId && { categoryId }),
             ...(brandId && { brandId }),
             ...(search && {

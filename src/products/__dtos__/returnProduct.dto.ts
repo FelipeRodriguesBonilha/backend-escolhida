@@ -36,6 +36,7 @@ export class ReturnProductDto {
     supplierId: string | null;
     imageUrl: string | null;
     active: boolean;
+    showInCatalog: boolean;
     createdAt: Date;
     updatedAt: Date;
     category?: ReturnCategoryDto;
@@ -62,6 +63,7 @@ export class ReturnProductDto {
         this.supplierId = product.supplierId;
         this.imageUrl = product.imageUrl;
         this.active = product.active;
+        this.showInCatalog = product.showInCatalog;
         this.createdAt = product.createdAt;
         this.updatedAt = product.updatedAt;
 

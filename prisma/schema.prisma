@@ -75,6 +75,7 @@ model Product {
   supplierId       String?
   imageUrl         String?
   active           Boolean    @default(true)
+  showInCatalog    Boolean    @default(false)
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
 
