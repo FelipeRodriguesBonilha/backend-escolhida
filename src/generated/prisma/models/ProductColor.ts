@@ -447,14 +447,6 @@ export type ProductColorUncheckedUpdateManyWithoutProductNestedInput = {
   deleteMany?: Prisma.ProductColorScalarWhereInput | Prisma.ProductColorScalarWhereInput[]
 }
 
-export type IntFieldUpdateOperationsInput = {
-  set?: number
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
-}
-
 export type ProductColorCreateWithoutProductInput = {
   id?: string
   name: string

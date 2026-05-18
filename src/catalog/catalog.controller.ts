@@ -45,6 +45,7 @@ export class CatalogController {
                     category: true,
                     brand: true,
                     colors: { orderBy: { order: 'asc' as const } },
+                    images: { orderBy: { order: 'asc' as const } },
                 },
                 orderBy: { name: 'asc' },
                 skip,
