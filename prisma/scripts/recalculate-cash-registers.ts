@@ -1,4 +1,4 @@
-import { PrismaClient, CashBleed, CashEntry, Sale, SalePaymentMethod, PaymentMethod } from '../src/generated/prisma/client';
+import { PrismaClient, CashBleed, CashEntry, Sale, SalePaymentMethod, PaymentMethod } from '../../src/generated/prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 
 type SalePaymentWithMethod = SalePaymentMethod & { paymentMethod: PaymentMethod };

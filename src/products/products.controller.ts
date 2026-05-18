@@ -8,9 +8,10 @@ import {
   Post,
   Query,
   UploadedFile,
+  UploadedFiles,
   UseInterceptors,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { Roles } from 'src/decorators/roles.decorator';
 import { Role } from 'src/users/__enums__/role.enum';
 import { CreateProductDto } from './__dtos__/createProduct.dto';
@@ -25,12 +26,12 @@ export class ProductsController {
   constructor(private readonly productsService: ProductsService) { }
 
   @Post()
-  @UseInterceptors(FileInterceptor('image'))
+  @UseInterceptors(FilesInterceptor('images', 10))
   async create(
     @Body() dto: CreateProductDto,
-    @UploadedFile() file?: Express.Multer.File,
+    @UploadedFiles() files?: Express.Multer.File[],
   ): Promise<ReturnProductDto> {
-    return new ReturnProductDto(await this.productsService.create(dto, file));
+    return new ReturnProductDto(await this.productsService.create(dto, files));
   }
 
   @Get()
@@ -65,13 +66,13 @@ export class ProductsController {
   }
 
   @Patch(':id')
-  @UseInterceptors(FileInterceptor('image'))
+  @UseInterceptors(FilesInterceptor('images', 10))
   async update(
     @Param('id') id: string,
     @Body() dto: UpdateProductDto,
-    @UploadedFile() file?: Express.Multer.File,
+    @UploadedFiles() files?: Express.Multer.File[],
   ): Promise<ReturnProductDto> {
-    return new ReturnProductDto(await this.productsService.update(id, dto, file));
+    return new ReturnProductDto(await this.productsService.update(id, dto, files));
   }
 
   @Delete(':id')
@@ -117,5 +118,13 @@ export class ProductsController {
     @Param('colorId') colorId: string,
   ): Promise<void> {
     await this.productsService.removeColor(id, colorId);
+  }
+
+  @Patch(':id/images/:imageId/set-main')
+  async setMainImage(
+    @Param('id') id: string,
+    @Param('imageId') imageId: string,
+  ) {
+    return this.productsService.setMainImage(id, imageId);
   }
 }

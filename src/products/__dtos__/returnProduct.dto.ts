@@ -1,8 +1,24 @@
-import { Product, Category, Brand, Supplier, Stock, ProductColor } from "src/generated/prisma/client";
+import { Product, Category, Brand, Supplier, Stock, ProductColor, ProductImage } from "src/generated/prisma/client";
 import { ReturnBrandDto } from "src/brands/__dtos__/returnBrand.dto";
 import { ReturnCategoryDto } from "src/categories/__dtos__/returnCategory.dto";
 import { ReturnSupplierDto } from "src/suppliers/__dtos__/returnSupplier.dto";
 import { ReturnStockDto } from "src/stock/__dtos__/returnStock.dto";
+
+export class ReturnProductImageDto {
+    id: string;
+    productId: string;
+    url: string;
+    order: number;
+    createdAt: Date;
+
+    constructor(image: ProductImage) {
+        this.id = image.id;
+        this.productId = image.productId;
+        this.url = image.url;
+        this.order = image.order;
+        this.createdAt = image.createdAt;
+    }
+}
 
 export class ReturnProductColorDto {
     id: string;
@@ -44,6 +60,7 @@ export class ReturnProductDto {
     supplier?: ReturnSupplierDto;
     stock?: ReturnStockDto;
     colors: ReturnProductColorDto[];
+    images: ReturnProductImageDto[];
 
     constructor(product: Product & { 
         category?: Category | null; 
@@ -51,6 +68,7 @@ export class ReturnProductDto {
         supplier?: Supplier | null; 
         stock?: Stock | null;
         colors?: ProductColor[];
+        images?: ProductImage[];
     }) {
         this.id = product.id;
         this.name = product.name;
@@ -72,5 +90,6 @@ export class ReturnProductDto {
         this.supplier = product.supplier ? new ReturnSupplierDto(product.supplier) : undefined;
         this.stock = product.stock ? new ReturnStockDto(product.stock) : undefined;
         this.colors = (product.colors ?? []).map(c => new ReturnProductColorDto(c));
+        this.images = (product.images ?? []).map(i => new ReturnProductImageDto(i));
     }
 }

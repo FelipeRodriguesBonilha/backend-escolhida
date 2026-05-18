@@ -18,7 +18,7 @@ export class ProductsService {
         private uploadService: UploadService,
     ) { }
 
-    async create(dto: CreateProductDto, file?: Express.Multer.File) {
+    async create(dto: CreateProductDto, files?: Express.Multer.File[]) {
         let barcode = dto.barcode;
         let barcodeGenerated = false;
         
@@ -45,10 +45,15 @@ export class ProductsService {
             throw new BadRequestException(`Estoque inicial (${stockQuantity}) não pode ser menor que o estoque mínimo (${minStockQuantity})`);
         }
 
-        let imageUrl: string | undefined;
-        if (file) {
-            imageUrl = await this.uploadService.saveFile(file);
+        const uploadedUrls: string[] = [];
+        if (files && files.length > 0) {
+            for (const file of files) {
+                const url = await this.uploadService.saveFile(file);
+                uploadedUrls.push(url);
+            }
         }
+
+        const mainImageUrl = uploadedUrls[0] ?? dto.imageUrl;
 
         return this.prisma.$transaction(async (tx) => {
             const product = await tx.product.create({
@@ -56,7 +61,7 @@ export class ProductsService {
                     ...productData,
                     barcode,
                     barcodeGenerated,
-                    imageUrl: imageUrl || dto.imageUrl,
+                    imageUrl: mainImageUrl,
                 }
             });
 
@@ -68,9 +73,15 @@ export class ProductsService {
                 },
             });
 
+            for (let i = 0; i < uploadedUrls.length; i++) {
+                await tx.productImage.create({
+                    data: { productId: product.id, url: uploadedUrls[i], order: i },
+                });
+            }
+
             const createdProduct = await tx.product.findUnique({
                 where: { id: product.id },
-                include: { category: true, brand: true, supplier: true, stock: true, colors: { orderBy: { order: 'asc' as const } } },
+                include: { category: true, brand: true, supplier: true, stock: true, colors: { orderBy: { order: 'asc' as const } }, images: { orderBy: { order: 'asc' as const } } },
             });
 
             if (!createdProduct) throw new NotFoundException('Erro ao criar produto');
@@ -95,7 +106,7 @@ export class ProductsService {
         const [data, total] = await Promise.all([
             this.prisma.product.findMany({
                 where,
-                include: { category: true, brand: true, supplier: true, stock: true, colors: { orderBy: { order: 'asc' as const } } },
+                include: { category: true, brand: true, supplier: true, stock: true, colors: { orderBy: { order: 'asc' as const } }, images: { orderBy: { order: 'asc' as const } } },
                 orderBy: { name: 'asc' },
                 skip,
                 take: limit,
@@ -108,7 +119,7 @@ export class ProductsService {
     async findOne(id: string) {
         const product = await this.prisma.product.findUnique({
             where: { id },
-            include: { category: true, brand: true, supplier: true, stock: true, colors: { orderBy: { order: 'asc' } } },
+            include: { category: true, brand: true, supplier: true, stock: true, colors: { orderBy: { order: 'asc' } }, images: { orderBy: { order: 'asc' } } },
         });
         if (!product) throw new NotFoundException('Produto não encontrado');
         return product;
@@ -117,13 +128,13 @@ export class ProductsService {
     async findByBarcode(barcode: string) {
         const product = await this.prisma.product.findUnique({
             where: { barcode },
-            include: { category: true, brand: true, supplier: true, stock: true, colors: { orderBy: { order: 'asc' } } },
+            include: { category: true, brand: true, supplier: true, stock: true, colors: { orderBy: { order: 'asc' } }, images: { orderBy: { order: 'asc' } } },
         });
         if (!product) throw new NotFoundException('Produto não encontrado para este código de barras');
         return product;
     }
 
-    async update(id: string, dto: UpdateProductDto, file?: Express.Multer.File) {
+    async update(id: string, dto: UpdateProductDto, files?: Express.Multer.File[]) {
         const product = await this.findOne(id);
 
         if (dto.barcode) {
@@ -133,26 +144,50 @@ export class ProductsService {
             if (exists) throw new ConflictException('Código de barras já cadastrado em outro produto');
         }
 
-        const { initialStock, minQuantity, removeImage, ...productData } = dto;
+        const { initialStock, minQuantity, removeImage, removeImageIds, ...productData } = dto;
 
-        let imageUrl: string | undefined | null;
-        if (file) {
-            imageUrl = await this.uploadService.saveFile(file);
-            if (product.imageUrl) {
-                await this.uploadService.deleteFile(product.imageUrl);
+        if (removeImageIds && removeImageIds.length > 0) {
+            const toRemove = await this.prisma.productImage.findMany({
+                where: { id: { in: removeImageIds }, productId: id },
+            });
+            for (const img of toRemove) {
+                await this.uploadService.deleteFile(img.url);
             }
-        } else if (dto.removeImage && product.imageUrl) {
-            await this.uploadService.deleteFile(product.imageUrl);
-            imageUrl = null;
+            await this.prisma.productImage.deleteMany({
+                where: { id: { in: removeImageIds }, productId: id },
+            });
         }
+
+        const uploadedUrls: string[] = [];
+        if (files && files.length > 0) {
+            for (const file of files) {
+                const url = await this.uploadService.saveFile(file);
+                uploadedUrls.push(url);
+            }
+            const maxOrder = await this.prisma.productImage.aggregate({
+                where: { productId: id },
+                _max: { order: true },
+            });
+            let nextOrder = (maxOrder._max.order ?? -1) + 1;
+            for (const url of uploadedUrls) {
+                await this.prisma.productImage.create({
+                    data: { productId: id, url, order: nextOrder++ },
+                });
+            }
+        }
+
+        const currentMain = await this.prisma.productImage.findFirst({
+            where: { productId: id },
+            orderBy: { order: 'asc' },
+        });
 
         return this.prisma.product.update({
             where: { id },
             data: {
                 ...productData,
-                ...(imageUrl !== undefined && { imageUrl }),
+                imageUrl: currentMain?.url ?? null,
             },
-            include: { category: true, brand: true, supplier: true, stock: true, colors: { orderBy: { order: 'asc' } } },
+            include: { category: true, brand: true, supplier: true, stock: true, colors: { orderBy: { order: 'asc' } }, images: { orderBy: { order: 'asc' } } },
         });
     }
 
@@ -161,7 +196,7 @@ export class ProductsService {
         return this.prisma.product.update({ 
             where: { id }, 
             data: { active: false },
-            include: { category: true, brand: true, supplier: true, stock: true, colors: { orderBy: { order: 'asc' } } },
+            include: { category: true, brand: true, supplier: true, stock: true, colors: { orderBy: { order: 'asc' } }, images: { orderBy: { order: 'asc' } } },
         });
     }
 
@@ -170,7 +205,7 @@ export class ProductsService {
         return this.prisma.product.update({
             where: { id },
             data: { active: true },
-            include: { category: true, brand: true, supplier: true, stock: true, colors: { orderBy: { order: 'asc' } } },
+            include: { category: true, brand: true, supplier: true, stock: true, colors: { orderBy: { order: 'asc' } }, images: { orderBy: { order: 'asc' } } },
         });
     }
 
@@ -180,6 +215,7 @@ export class ProductsService {
         const saleItemCount = await this.prisma.saleItem.count({ where: { productId: id } });
         if (saleItemCount > 0) throw new BadRequestException(`Não é possível excluir: este produto possui ${saleItemCount} item(ns) em vendas`);
         await this.prisma.$transaction(async (tx) => {
+            await tx.productImage.deleteMany({ where: { productId: id } });
             await tx.productColor.deleteMany({ where: { productId: id } });
             await tx.stock.deleteMany({ where: { productId: id } });
             await tx.product.delete({ where: { id } });
@@ -191,7 +227,7 @@ export class ProductsService {
             where: {
                 product: { active: true },
             },
-            include: { product: { include: { category: true, brand: true, supplier: true, stock: true, colors: { orderBy: { order: 'asc' } } } } },
+            include: { product: { include: { category: true, brand: true, supplier: true, stock: true, colors: { orderBy: { order: 'asc' } }, images: { orderBy: { order: 'asc' } } } } },
         });
 
         return stocks
@@ -257,5 +293,35 @@ export class ProductsService {
         }
 
         return this.prisma.productColor.delete({ where: { id: colorId } });
+    }
+
+    async setMainImage(productId: string, imageId: string) {
+        const image = await this.prisma.productImage.findFirst({ where: { id: imageId, productId } });
+        if (!image) throw new NotFoundException('Imagem não encontrada');
+
+        const allImages = await this.prisma.productImage.findMany({
+            where: { productId },
+            orderBy: { order: 'asc' },
+        });
+
+        await this.prisma.$transaction(async (tx) => {
+            await tx.productImage.updateMany({
+                where: { productId, order: { lt: image.order } },
+                data: { order: { increment: 1 } },
+            });
+            await tx.productImage.update({
+                where: { id: imageId },
+                data: { order: 0 },
+            });
+            await tx.product.update({
+                where: { id: productId },
+                data: { imageUrl: image.url },
+            });
+        });
+
+        return this.prisma.productImage.findMany({
+            where: { productId },
+            orderBy: { order: 'asc' },
+        });
     }
 }
