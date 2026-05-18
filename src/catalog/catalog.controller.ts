@@ -1,5 +1,6 @@
 import { Controller, Get, Param, Query, Res, StreamableFile } from '@nestjs/common';
 import type { Response } from 'express';
+import { Prisma } from 'src/generated/prisma/client';
 import { PrismaService } from 'src/prisma.service';
 import { UploadService } from 'src/upload/upload.service';
 import { ReturnProductDto } from 'src/products/__dtos__/returnProduct.dto';
@@ -23,16 +24,16 @@ export class CatalogController {
         const limitNum = parseInt(limit ?? '50') || 50;
         const skip = (pageNum - 1) * limitNum;
 
-        const where: any = {
+        const where: Prisma.ProductWhereInput = {
             active: true,
             showInCatalog: true,
             ...(categoryId && { categoryId }),
             ...(brandId && { brandId }),
             ...(search && {
                 OR: [
-                    { name: { contains: search, mode: 'insensitive' as const } },
-                    { description: { contains: search, mode: 'insensitive' as const } },
-                    { category: { name: { contains: search, mode: 'insensitive' as const } } },
+                    { name: { contains: search, mode: 'insensitive' } },
+                    { description: { contains: search, mode: 'insensitive' } },
+                    { category: { name: { contains: search, mode: 'insensitive' } } },
                 ],
             }),
         };
@@ -63,15 +64,21 @@ export class CatalogController {
     @Get('categories')
     async getCategories() {
         return this.prisma.category.findMany({
+            where: { active: true, showInCatalog: true },
             orderBy: { name: 'asc' },
         });
     }
 
     @Get('brands')
     async getBrands(@Query('categoryId') categoryId?: string) {
-        const where: any = { active: true, ...(categoryId && { categoryId }) };
+        const productWhere: Prisma.ProductWhereInput = {
+            active: true,
+            showInCatalog: true,
+            brand: { showInCatalog: true, active: true },
+            ...(categoryId && { categoryId }),
+        };
         const products = await this.prisma.product.findMany({
-            where,
+            where: productWhere,
             select: { brand: true },
             distinct: ['brandId'],
         });
