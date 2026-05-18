@@ -95,8 +95,10 @@ export class CashRegisterService {
     const totalBleeds = cashRegister.bleeds.reduce((sum, b) => sum + Number(b.amount), 0);
     const totalEntries = cashRegister.entries.reduce((sum, e) => sum + Number(e.amount), 0);
     const totalCashSales = cashRegister.sales
-      .filter(sale => sale.payments.some(payment => payment.paymentMethod.code === 'CASH'))
-      .reduce((sum, sale) => sum + Number(sale.finalTotal), 0);
+      .reduce((sum, sale) => {
+        const cashPayment = sale.payments.find(payment => payment.paymentMethod.code === 'CASH');
+        return sum + (cashPayment ? Number(cashPayment.amount) : 0);
+      }, 0);
     
     const finalAmount = Number(cashRegister.initialAmount) + totalEntries + totalCashSales - totalBleeds;
 

@@ -113,7 +113,9 @@ export class ReturnCashRegisterDto {
     this.totalBleeds = this.bleeds.reduce((sum, b) => sum + b.amount, 0);
     this.totalEntries = this.entries.reduce((sum, e) => sum + e.amount, 0);
     this.totalCashSales = this.sales
-      .filter(sale => sale.payments.some(payment => payment.paymentMethod.code === 'CASH'))
-      .reduce((sum, sale) => sum + sale.finalTotal, 0);
+      .reduce((sum, sale) => {
+        const cashPayment = sale.payments.find(payment => payment.paymentMethod.code === 'CASH');
+        return sum + (cashPayment ? cashPayment.amount : 0);
+      }, 0);
   }
 }

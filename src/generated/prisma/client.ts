@@ -65,11 +65,6 @@ export type Brand = Prisma.BrandModel
  */
 export type Product = Prisma.ProductModel
 /**
- * Model ProductImage
- * 
- */
-export type ProductImage = Prisma.ProductImageModel
-/**
  * Model ProductColor
  * 
  */
