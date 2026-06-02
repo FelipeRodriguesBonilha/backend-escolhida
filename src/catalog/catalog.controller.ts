@@ -19,6 +19,7 @@ export class CatalogController {
         @Query('limit') limit?: string,
         @Query('categoryId') categoryId?: string,
         @Query('brandId') brandId?: string,
+        @Query('inPromotion') inPromotion?: string,
     ) {
         const pageNum = parseInt(page ?? '1') || 1;
         const limitNum = parseInt(limit ?? '50') || 50;
@@ -29,6 +30,7 @@ export class CatalogController {
             showInCatalog: true,
             ...(categoryId && { categoryId }),
             ...(brandId && { brandId }),
+            ...(inPromotion === 'true' && { inPromotion: true }),
             ...(search && {
                 OR: [
                     { name: { contains: search, mode: 'insensitive' } },
@@ -47,7 +49,7 @@ export class CatalogController {
                     colors: { orderBy: { order: 'asc' as const } },
                     images: { orderBy: { order: 'asc' as const } },
                 },
-                orderBy: { name: 'asc' },
+                orderBy: [{ inPromotion: 'desc' }, { name: 'asc' }],
                 skip,
                 take: limitNum,
             }),

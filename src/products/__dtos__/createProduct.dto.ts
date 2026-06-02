@@ -65,4 +65,19 @@ export class CreateProductDto {
         return value;
     })
     showInCatalog?: boolean;
+
+    @IsOptional()
+    @IsBoolean()
+    @Transform(({ value }) => {
+        if (value === 'true') return true;
+        if (value === 'false') return false;
+        return value;
+    })
+    inPromotion?: boolean;
+
+    @IsOptional()
+    @Type(() => Number)
+    @IsNumber({ maxDecimalPlaces: 2 })
+    @IsPositive()
+    promotionPrice?: number;
 }

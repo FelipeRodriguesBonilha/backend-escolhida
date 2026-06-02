@@ -47,6 +47,9 @@ export class ReturnProductDto {
     description: string | null;
     price: number;
     costPrice: number;
+    inPromotion: boolean;
+    promotionPrice: number | null;
+    effectivePrice: number;
     categoryId: string;
     brandId: string | null;
     supplierId: string | null;
@@ -76,6 +79,9 @@ export class ReturnProductDto {
         this.description = product.description;
         this.price = Number(product.price);
         this.costPrice = Number(product.costPrice);
+        this.inPromotion = product.inPromotion;
+        this.promotionPrice = product.promotionPrice ? Number(product.promotionPrice) : null;
+        this.effectivePrice = this.inPromotion && this.promotionPrice ? this.promotionPrice : this.price;
         this.categoryId = product.categoryId;
         this.brandId = product.brandId;
         this.supplierId = product.supplierId;
