@@ -36,7 +36,9 @@ export class SalesService {
 
         const available = stock?.quantity ?? 0;
         const hasStock = available >= item.quantity;
-        const unitPrice = Number(product.price);
+        const unitPrice = product.inPromotion && product.promotionPrice
+            ? Number(product.promotionPrice)
+            : Number(product.price);
         const subtotal = unitPrice * item.quantity;
 
         return {

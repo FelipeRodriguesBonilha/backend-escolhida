@@ -72,6 +72,8 @@ model Product {
   description      String?
   price            Decimal    @db.Decimal(10, 2)
   costPrice        Decimal    @db.Decimal(10, 2)
+  inPromotion      Boolean    @default(false)
+  promotionPrice   Decimal?   @db.Decimal(10, 2)
   categoryId       String
   brandId          String
   supplierId       String?
