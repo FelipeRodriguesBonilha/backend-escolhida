@@ -50,6 +50,7 @@ export class ReturnProductDto {
     inPromotion: boolean;
     promotionPrice: number | null;
     effectivePrice: number;
+    isNew: boolean;
     categoryId: string;
     brandId: string | null;
     supplierId: string | null;
@@ -82,6 +83,7 @@ export class ReturnProductDto {
         this.inPromotion = product.inPromotion;
         this.promotionPrice = product.promotionPrice ? Number(product.promotionPrice) : null;
         this.effectivePrice = this.inPromotion && this.promotionPrice ? this.promotionPrice : this.price;
+        this.isNew = product.isNew;
         this.categoryId = product.categoryId;
         this.brandId = product.brandId;
         this.supplierId = product.supplierId;

@@ -76,6 +76,15 @@ export class CreateProductDto {
     inPromotion?: boolean;
 
     @IsOptional()
+    @IsBoolean()
+    @Transform(({ value }) => {
+        if (value === 'true') return true;
+        if (value === 'false') return false;
+        return value;
+    })
+    isNew?: boolean;
+
+    @IsOptional()
     @Type(() => Number)
     @IsNumber({ maxDecimalPlaces: 2 })
     @IsPositive()
