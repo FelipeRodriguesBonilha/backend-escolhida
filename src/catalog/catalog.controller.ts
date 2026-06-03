@@ -48,6 +48,7 @@ export class CatalogController {
                 include: {
                     category: true,
                     brand: true,
+                    stock: true,
                     colors: { orderBy: { order: 'asc' as const } },
                     images: { orderBy: { order: 'asc' as const } },
                 },
