@@ -37,7 +37,10 @@ export class ReportsService {
         const byPaymentMethod = sales.reduce((acc, sale) => {
             for (const payment of sale.payments) {
                 const method = payment.paymentMethod.name;
-                acc[method] = (acc[method] ?? 0) + Number(payment.amount);
+                const amount = payment.paymentMethod.code === 'CASH'
+                    ? Number(payment.amount) - Number(sale.change)
+                    : Number(payment.amount);
+                acc[method] = (acc[method] ?? 0) + amount;
             }
             return acc;
         }, {} as Record<string, number>);
@@ -106,7 +109,10 @@ export class ReportsService {
         const byPaymentMethod = sales.reduce((acc, sale) => {
             for (const payment of sale.payments) {
                 const method = payment.paymentMethod.name;
-                acc[method] = (acc[method] ?? 0) + Number(payment.amount);
+                const amount = payment.paymentMethod.code === 'CASH'
+                    ? Number(payment.amount) - Number(sale.change)
+                    : Number(payment.amount);
+                acc[method] = (acc[method] ?? 0) + amount;
             }
             return acc;
         }, {} as Record<string, number>);

@@ -115,7 +115,7 @@ export class ReturnCashRegisterDto {
     this.totalCashSales = this.sales
       .reduce((sum, sale) => {
         const cashPayment = sale.payments.find(payment => payment.paymentMethod.code === 'CASH');
-        return sum + (cashPayment ? cashPayment.amount : 0);
+        return sum + (cashPayment ? cashPayment.amount - sale.change : 0);
       }, 0);
   }
 }

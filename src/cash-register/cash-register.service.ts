@@ -97,7 +97,7 @@ export class CashRegisterService {
     const totalCashSales = cashRegister.sales
       .reduce((sum, sale) => {
         const cashPayment = sale.payments.find(payment => payment.paymentMethod.code === 'CASH');
-        return sum + (cashPayment ? Number(cashPayment.amount) : 0);
+        return sum + (cashPayment ? Number(cashPayment.amount) - Number(sale.change) : 0);
       }, 0);
     
     const finalAmount = Number(cashRegister.initialAmount) + totalEntries + totalCashSales - totalBleeds;
