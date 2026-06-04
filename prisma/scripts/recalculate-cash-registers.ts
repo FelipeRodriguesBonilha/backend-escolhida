@@ -45,7 +45,7 @@ async function recalculateCashRegisters() {
       const totalEntries = entries.reduce((sum, e) => sum + Number(e.amount), 0);
       const totalCashSales = sales.reduce((sum, sale) => {
         const cashPayment = sale.payments.find(p => p.paymentMethod.code === 'CASH');
-        return sum + (cashPayment ? Number(cashPayment.amount) : 0);
+        return sum + (cashPayment ? Number(cashPayment.amount) - Number(sale.change) : 0);
       }, 0);
 
       const newFinalAmount = Number(cashRegister.initialAmount) + totalEntries + totalCashSales - totalBleeds;
