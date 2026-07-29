@@ -165,12 +165,13 @@ model SalePaymentMethod {
 }
 
 model SaleItem {
-  id        String  @id @default(uuid())
-  saleId    String
-  productId String
-  quantity  Int
-  unitPrice Decimal @db.Decimal(10, 2)
-  subtotal  Decimal @db.Decimal(10, 2)
+  id          String  @id @default(uuid())
+  saleId      String
+  productId   String
+  quantity    Int
+  unitPrice   Decimal @db.Decimal(10, 2)
+  priceEdited Boolean @default(false)
+  subtotal    Decimal @db.Decimal(10, 2)
 
   sale    Sale    @relation(fields: [saleId], references: [id])
   product Product @relation(fields: [productId], references: [id])
