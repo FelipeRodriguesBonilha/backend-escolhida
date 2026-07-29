@@ -1,0 +1,2 @@
+ALTER TABLE "SaleItem"
+ADD COLUMN "priceEdited" BOOLEAN NOT NULL DEFAULT false;

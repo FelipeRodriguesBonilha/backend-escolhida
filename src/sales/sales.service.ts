@@ -16,7 +16,7 @@ export class SalesService {
     ) { }
 
     private async validateItemWithStock(
-        item: { productId: string; quantity: number },
+        item: { productId: string; quantity: number; unitPrice?: number },
         prismaClient: Omit<PrismaService, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'>,
     ) {
         const product = await prismaClient.product.findUnique({
@@ -36,10 +36,11 @@ export class SalesService {
 
         const available = stock?.quantity ?? 0;
         const hasStock = available >= item.quantity;
-        const unitPrice = product.inPromotion && product.promotionPrice
+        const productPrice = product.inPromotion && product.promotionPrice
             ? Number(product.promotionPrice)
             : Number(product.price);
-        const subtotal = unitPrice * item.quantity;
+        const unitPrice = item.unitPrice ?? productPrice;
+        const subtotal = Math.round(unitPrice * item.quantity * 100) / 100;
 
         return {
             product,
@@ -191,6 +192,7 @@ export class SalesService {
                         product: validation.product,
                         quantity: item.quantity,
                         unitPrice: validation.unitPrice,
+                        priceEdited: item.unitPrice !== undefined,
                         subtotal: validation.subtotal,
                     };
                 }),
@@ -229,6 +231,7 @@ export class SalesService {
                             productId: i.product.id,
                             quantity: i.quantity,
                             unitPrice: i.unitPrice,
+                            priceEdited: i.priceEdited,
                             subtotal: i.subtotal,
                         })),
                     },

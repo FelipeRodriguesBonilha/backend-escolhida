@@ -7,6 +7,7 @@ export class ReturnSaleItemDto {
     productId: string;
     quantity: number;
     unitPrice: number;
+    priceEdited: boolean;
     subtotal: number;
     product?: ReturnProductDto;
 
@@ -16,6 +17,7 @@ export class ReturnSaleItemDto {
         this.productId = item.productId;
         this.quantity = item.quantity;
         this.unitPrice = Number(item.unitPrice);
+        this.priceEdited = item.priceEdited;
         this.subtotal = Number(item.subtotal);
         
         this.product = item.product ? new ReturnProductDto(item.product) : undefined;

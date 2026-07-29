@@ -19,6 +19,12 @@ export class SaleItemDto {
     @IsInt()
     @Min(1)
     quantity: number;
+
+    @IsOptional()
+    @Type(() => Number)
+    @IsNumber({ maxDecimalPlaces: 2 })
+    @IsPositive()
+    unitPrice?: number;
 }
 
 export class SalePaymentMethodDto {
