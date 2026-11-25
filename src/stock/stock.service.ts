@@ -51,7 +51,7 @@ export class StockService {
         const saleItemCount = await this.prisma.saleItem.count({ where: { productId } });
         if (saleItemCount > 0) throw new BadRequestException(`Não é possível excluir: este produto possui ${saleItemCount} item(ns) em vendas`);
         await this.prisma.$transaction(async (tx) => {
-            await tx.productColor.deleteMany({ where: { productId } });
+            await tx.productVariation.deleteMany({ where: { productId } });
             await tx.stock.delete({ where: { productId } });
             await tx.product.delete({ where: { id: productId } });
         });

@@ -57,7 +57,7 @@ export const ModelName = {
   Brand: 'Brand',
   Product: 'Product',
   ProductImage: 'ProductImage',
-  ProductColor: 'ProductColor',
+  ProductVariation: 'ProductVariation',
   Stock: 'Stock',
   PaymentMethod: 'PaymentMethod',
   Sale: 'Sale',
@@ -170,7 +170,7 @@ export const ProductImageScalarFieldEnum = {
 export type ProductImageScalarFieldEnum = (typeof ProductImageScalarFieldEnum)[keyof typeof ProductImageScalarFieldEnum]
 
 
-export const ProductColorScalarFieldEnum = {
+export const ProductVariationScalarFieldEnum = {
   id: 'id',
   productId: 'productId',
   name: 'name',
@@ -181,7 +181,7 @@ export const ProductColorScalarFieldEnum = {
   createdAt: 'createdAt'
 } as const
 
-export type ProductColorScalarFieldEnum = (typeof ProductColorScalarFieldEnum)[keyof typeof ProductColorScalarFieldEnum]
+export type ProductVariationScalarFieldEnum = (typeof ProductVariationScalarFieldEnum)[keyof typeof ProductVariationScalarFieldEnum]
 
 
 export const StockScalarFieldEnum = {

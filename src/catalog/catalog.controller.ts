@@ -49,7 +49,7 @@ export class CatalogController {
                     category: true,
                     brand: true,
                     stock: true,
-                    colors: { orderBy: { order: 'asc' as const } },
+                    variations: { orderBy: { order: 'asc' as const } },
                     images: { orderBy: { order: 'asc' as const } },
                 },
                 orderBy: [{ inPromotion: 'desc' }, { isNew: 'desc' }, { name: 'asc' }],
