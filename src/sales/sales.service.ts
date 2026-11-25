@@ -36,6 +36,9 @@ export class SalesService {
 
         const available = stock?.quantity ?? 0;
         const hasStock = available >= item.quantity;
+        const daysToExpire = product.expirationDate
+            ? Math.round((new Date(product.expirationDate).setHours(0, 0, 0, 0) - new Date().setHours(0, 0, 0, 0)) / 86400000)
+            : null;
         const productPrice = product.inPromotion && product.promotionPrice
             ? Number(product.promotionPrice)
             : Number(product.price);
@@ -47,6 +50,7 @@ export class SalesService {
             stock,
             available,
             hasStock,
+            daysToExpire,
             unitPrice,
             subtotal,
             willBelowMinStock: stock
@@ -111,12 +115,15 @@ export class SalesService {
                     subtotal: validation.subtotal,
                     stockAvailable: validation.available,
                     hasStock: validation.hasStock,
+                    daysToExpire: validation.daysToExpire,
+                    expirationDate: validation.product.expirationDate,
                     willBelowMinStock: validation.willBelowMinStock,
                 };
             }),
         );
 
         const stockErrors = itemsWithDetails.filter((i) => !i.hasStock);
+        const expiredItems = itemsWithDetails.filter((i) => i.daysToExpire !== null && i.daysToExpire < 0);
 
         const subtotal = Math.round(
             itemsWithDetails.reduce((sum, i) => sum + i.subtotal, 0) * 100,
@@ -139,7 +146,7 @@ export class SalesService {
             });
         }
 
-        const canFinalize = stockErrors.length === 0 && paymentErrors.length === 0;
+        const canFinalize = stockErrors.length === 0 && paymentErrors.length === 0 && expiredItems.length === 0;
 
         return {
             canFinalize,
@@ -161,9 +168,16 @@ export class SalesService {
                     productName: i.productName,
                     message: `Estoque insuficiente para "${i.productName}". Disponível: ${i.stockAvailable}, solicitado: ${i.quantity}`,
                 })),
+                ...expiredItems.map((i) => ({
+                    type: 'PRODUCT_EXPIRED',
+                    productId: i.productId,
+                    productName: i.productName,
+                    message: `Produto "${i.productName}" está vencido desde ${new Date(i.expirationDate!).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}`,
+                })),
                 ...paymentErrors,
             ],
-            warnings: itemsWithDetails
+            warnings: [
+                ...itemsWithDetails
                 .filter((i) => i.hasStock && i.willBelowMinStock)
                 .map((i) => ({
                     type: 'LOW_STOCK_AFTER_SALE',
@@ -171,6 +185,17 @@ export class SalesService {
                     productName: i.productName,
                     message: `"${i.productName}" ficará abaixo do estoque mínimo após esta venda`,
                 })),
+                ...itemsWithDetails
+                    .filter((i) => i.daysToExpire !== null && i.daysToExpire >= 0)
+                    .map((i) => ({
+                        type: 'EXPIRING_SOON',
+                        productId: i.productId,
+                        productName: i.productName,
+                        message: i.daysToExpire === 0
+                            ? `"${i.productName}" vence hoje`
+                            : `"${i.productName}" vence em ${i.daysToExpire} dia${i.daysToExpire === 1 ? '' : 's'}`,
+                    })),
+            ],
         };
     }
 
@@ -185,6 +210,12 @@ export class SalesService {
                     if (!validation.hasStock) {
                         throw new BadRequestException(
                             `Estoque insuficiente para "${validation.product.name}". Disponível: ${validation.available}`,
+                        );
+                    }
+
+                    if (validation.daysToExpire !== null && validation.daysToExpire < 0) {
+                        throw new BadRequestException(
+                            `Produto "${validation.product.name}" está vencido desde ${new Date(validation.product.expirationDate!).toLocaleDateString('pt-BR', { timeZone: 'UTC' })} e não pode ser vendido.`,
                         );
                     }
 
