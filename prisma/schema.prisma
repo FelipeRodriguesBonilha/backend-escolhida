@@ -107,6 +107,7 @@ model ProductColor {
   id         String   @id @default(uuid())
   productId  String
   name       String
+  barcode    String?  @unique
   colorCode  String?
   imageUrl   String?
   order      Int      @default(0)

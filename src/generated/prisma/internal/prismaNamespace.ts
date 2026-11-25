@@ -1657,6 +1657,7 @@ export const ProductColorScalarFieldEnum = {
   id: 'id',
   productId: 'productId',
   name: 'name',
+  barcode: 'barcode',
   colorCode: 'colorCode',
   imageUrl: 'imageUrl',
   order: 'order',
@@ -1722,6 +1723,7 @@ export const SaleItemScalarFieldEnum = {
   productId: 'productId',
   quantity: 'quantity',
   unitPrice: 'unitPrice',
+  priceEdited: 'priceEdited',
   subtotal: 'subtotal'
 } as const
 

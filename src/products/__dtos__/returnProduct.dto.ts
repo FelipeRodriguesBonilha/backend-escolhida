@@ -24,6 +24,7 @@ export class ReturnProductColorDto {
     id: string;
     productId: string;
     name: string;
+    barcode: string | null;
     colorCode: string | null;
     imageUrl: string | null;
     order: number;
@@ -33,6 +34,7 @@ export class ReturnProductColorDto {
         this.id = color.id;
         this.productId = color.productId;
         this.name = color.name;
+        this.barcode = color.barcode;
         this.colorCode = color.colorCode;
         this.imageUrl = color.imageUrl;
         this.order = color.order;
