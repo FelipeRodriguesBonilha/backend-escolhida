@@ -15,9 +15,9 @@ import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { Roles } from 'src/decorators/roles.decorator';
 import { Role } from 'src/users/__enums__/role.enum';
 import { CreateProductDto } from './__dtos__/createProduct.dto';
-import { ReturnProductDto, ReturnProductColorDto } from './__dtos__/returnProduct.dto';
+import { ReturnProductDto, ReturnProductVariationDto } from './__dtos__/returnProduct.dto';
 import { UpdateProductDto } from './__dtos__/updateProduct.dto';
-import { ConvertProductToColorDto, CreateProductColorDto } from './__dtos__/createProductColor.dto';
+import { ConvertProductToVariationDto, CreateProductVariationDto } from './__dtos__/createProductVariation.dto';
 import { ProductsService } from './products.service';
 
 @Roles(Role.Admin)
@@ -91,43 +91,43 @@ export class ProductsController {
     return { message: 'Produto excluído permanentemente' };
   }
 
-  @Post(':id/colors')
+  @Post(':id/variations')
   @UseInterceptors(FileInterceptor('image'))
-  async addColor(
+  async addVariation(
     @Param('id') id: string,
-    @Body() dto: CreateProductColorDto,
+    @Body() dto: CreateProductVariationDto,
     @UploadedFile() file?: Express.Multer.File,
-  ): Promise<ReturnProductColorDto> {
-    return new ReturnProductColorDto(await this.productsService.addColor(id, dto, file));
+  ): Promise<ReturnProductVariationDto> {
+    return new ReturnProductVariationDto(await this.productsService.addVariation(id, dto, file));
   }
 
-  @Post(':id/colors/convert')
+  @Post(':id/variations/convert')
   @UseInterceptors(FileInterceptor('image'))
-  async convertProductToColor(
+  async convertProductToVariation(
     @Param('id') id: string,
-    @Body() dto: ConvertProductToColorDto,
+    @Body() dto: ConvertProductToVariationDto,
     @UploadedFile() file?: Express.Multer.File,
-  ): Promise<ReturnProductColorDto> {
-    return new ReturnProductColorDto(await this.productsService.convertProductToColor(id, dto, file));
+  ): Promise<ReturnProductVariationDto> {
+    return new ReturnProductVariationDto(await this.productsService.convertProductToVariation(id, dto, file));
   }
 
-  @Patch(':id/colors/:colorId')
+  @Patch(':id/variations/:variationId')
   @UseInterceptors(FileInterceptor('image'))
-  async updateColor(
+  async updateVariation(
     @Param('id') id: string,
-    @Param('colorId') colorId: string,
-    @Body() dto: CreateProductColorDto,
+    @Param('variationId') variationId: string,
+    @Body() dto: CreateProductVariationDto,
     @UploadedFile() file?: Express.Multer.File,
-  ): Promise<ReturnProductColorDto> {
-    return new ReturnProductColorDto(await this.productsService.updateColor(id, colorId, dto, file));
+  ): Promise<ReturnProductVariationDto> {
+    return new ReturnProductVariationDto(await this.productsService.updateVariation(id, variationId, dto, file));
   }
 
-  @Delete(':id/colors/:colorId')
-  async removeColor(
+  @Delete(':id/variations/:variationId')
+  async removeVariation(
     @Param('id') id: string,
-    @Param('colorId') colorId: string,
+    @Param('variationId') variationId: string,
   ): Promise<void> {
-    await this.productsService.removeColor(id, colorId);
+    await this.productsService.removeVariation(id, variationId);
   }
 
   @Patch(':id/images/:imageId/set-main')

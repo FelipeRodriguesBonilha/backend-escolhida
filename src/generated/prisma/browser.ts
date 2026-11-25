@@ -48,10 +48,10 @@ export type Product = Prisma.ProductModel
  */
 export type ProductImage = Prisma.ProductImageModel
 /**
- * Model ProductColor
+ * Model ProductVariation
  * 
  */
-export type ProductColor = Prisma.ProductColorModel
+export type ProductVariation = Prisma.ProductVariationModel
 /**
  * Model Stock
  * 

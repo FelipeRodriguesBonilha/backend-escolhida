@@ -89,7 +89,7 @@ model Product {
   supplier  Supplier?     @relation(fields: [supplierId], references: [id])
   stock     Stock?
   saleItems SaleItem[]
-  colors    ProductColor[]
+  variations ProductVariation[]
   images    ProductImage[]
 }
 
@@ -103,7 +103,7 @@ model ProductImage {
   product Product @relation(fields: [productId], references: [id])
 }
 
-model ProductColor {
+model ProductVariation {
   id         String   @id @default(uuid())
   productId  String
   name       String

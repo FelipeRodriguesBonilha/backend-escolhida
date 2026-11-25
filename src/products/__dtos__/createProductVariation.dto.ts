@@ -1,7 +1,7 @@
 import { IsBoolean, IsOptional, IsString } from 'class-validator';
 import { Transform } from 'class-transformer';
 
-export class CreateProductColorDto {
+export class CreateProductVariationDto {
     @IsString()
     name: string;
 
@@ -23,13 +23,13 @@ export class CreateProductColorDto {
     removeImage?: boolean;
 }
 
-export class ConvertProductToColorDto {
+export class ConvertProductToVariationDto {
     @IsString()
     barcode: string;
 
     @IsOptional()
     @IsString()
-    colorId?: string;
+    variationId?: string;
 
     @IsOptional()
     @IsString()

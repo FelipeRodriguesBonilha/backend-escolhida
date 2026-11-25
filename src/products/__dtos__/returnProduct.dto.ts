@@ -1,4 +1,4 @@
-import { Product, Category, Brand, Supplier, Stock, ProductColor, ProductImage } from "src/generated/prisma/client";
+import { Product, Category, Brand, Supplier, Stock, ProductVariation, ProductImage } from "src/generated/prisma/client";
 import { ReturnBrandDto } from "src/brands/__dtos__/returnBrand.dto";
 import { ReturnCategoryDto } from "src/categories/__dtos__/returnCategory.dto";
 import { ReturnSupplierDto } from "src/suppliers/__dtos__/returnSupplier.dto";
@@ -20,7 +20,7 @@ export class ReturnProductImageDto {
     }
 }
 
-export class ReturnProductColorDto {
+export class ReturnProductVariationDto {
     id: string;
     productId: string;
     name: string;
@@ -30,15 +30,15 @@ export class ReturnProductColorDto {
     order: number;
     createdAt: Date;
 
-    constructor(color: ProductColor) {
-        this.id = color.id;
-        this.productId = color.productId;
-        this.name = color.name;
-        this.barcode = color.barcode;
-        this.colorCode = color.colorCode;
-        this.imageUrl = color.imageUrl;
-        this.order = color.order;
-        this.createdAt = color.createdAt;
+    constructor(variation: ProductVariation) {
+        this.id = variation.id;
+        this.productId = variation.productId;
+        this.name = variation.name;
+        this.barcode = variation.barcode;
+        this.colorCode = variation.colorCode;
+        this.imageUrl = variation.imageUrl;
+        this.order = variation.order;
+        this.createdAt = variation.createdAt;
     }
 }
 
@@ -65,7 +65,7 @@ export class ReturnProductDto {
     brand?: ReturnBrandDto;
     supplier?: ReturnSupplierDto;
     stock?: ReturnStockDto;
-    colors: ReturnProductColorDto[];
+    variations: ReturnProductVariationDto[];
     images: ReturnProductImageDto[];
 
     constructor(product: Product & { 
@@ -73,7 +73,7 @@ export class ReturnProductDto {
         brand?: Brand | null; 
         supplier?: Supplier | null; 
         stock?: Stock | null;
-        colors?: ProductColor[];
+        variations?: ProductVariation[];
         images?: ProductImage[];
     }) {
         this.id = product.id;
@@ -99,7 +99,7 @@ export class ReturnProductDto {
         this.brand = product.brand ? new ReturnBrandDto(product.brand) : undefined;
         this.supplier = product.supplier ? new ReturnSupplierDto(product.supplier) : undefined;
         this.stock = product.stock ? new ReturnStockDto(product.stock) : undefined;
-        this.colors = (product.colors ?? []).map(c => new ReturnProductColorDto(c));
+        this.variations = (product.variations ?? []).map(c => new ReturnProductVariationDto(c));
         this.images = (product.images ?? []).map(i => new ReturnProductImageDto(i));
     }
 }
