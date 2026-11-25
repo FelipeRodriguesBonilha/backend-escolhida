@@ -317,13 +317,15 @@ export class ProductsService {
         });
     }
 
-    async convertProductToColor(productId: string, dto: ConvertProductToColorDto) {
+    async convertProductToColor(productId: string, dto: ConvertProductToColorDto, file?: Express.Multer.File) {
         const source = await this.prisma.product.findUnique({
             where: { barcode: dto.barcode },
         });
         if (!source) throw new NotFoundException('Nenhum produto encontrado com este código de barras');
         if (source.id === productId) throw new BadRequestException('Este código de barras já pertence ao próprio produto');
         await this.findOne(productId);
+
+        const imageUrl = file ? await this.uploadService.saveFile(file) : undefined;
 
         return this.prisma.$transaction(async (tx) => {
             let color;
@@ -336,6 +338,7 @@ export class ProductsService {
                         ...(dto.name && { name: dto.name }),
                         ...(dto.colorCode && { colorCode: dto.colorCode }),
                         barcode: source.barcode,
+                        imageUrl: imageUrl ?? existing.imageUrl ?? source.imageUrl,
                     },
                 });
             } else {
@@ -349,7 +352,7 @@ export class ProductsService {
                         name: dto.name || source.name,
                         barcode: source.barcode,
                         colorCode: dto.colorCode,
-                        imageUrl: source.imageUrl,
+                        imageUrl: imageUrl ?? source.imageUrl,
                         order: (maxOrder._max.order ?? -1) + 1,
                     },
                 });

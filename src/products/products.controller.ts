@@ -102,11 +102,13 @@ export class ProductsController {
   }
 
   @Post(':id/colors/convert')
+  @UseInterceptors(FileInterceptor('image'))
   async convertProductToColor(
     @Param('id') id: string,
     @Body() dto: ConvertProductToColorDto,
+    @UploadedFile() file?: Express.Multer.File,
   ): Promise<ReturnProductColorDto> {
-    return new ReturnProductColorDto(await this.productsService.convertProductToColor(id, dto));
+    return new ReturnProductColorDto(await this.productsService.convertProductToColor(id, dto, file));
   }
 
   @Patch(':id/colors/:colorId')
