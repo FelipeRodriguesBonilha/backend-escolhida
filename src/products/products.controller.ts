@@ -55,6 +55,15 @@ export class ProductsController {
     return (await this.productsService.findLowStock()).map(product => new ReturnProductDto(product));
   }
 
+  @Get('expirations')
+  async findExpirations(@Query('days') days?: string) {
+    const result = await this.productsService.findExpirations(parseInt(days ?? '90') || 90);
+    return {
+      expired: result.expired.map(p => new ReturnProductDto(p)),
+      expiring: result.expiring.map(p => new ReturnProductDto(p)),
+    };
+  }
+
   @Get('barcode/:barcode')
   async findByBarcode(@Param('barcode') barcode: string): Promise<ReturnProductDto> {
     return new ReturnProductDto(await this.productsService.findByBarcode(barcode));

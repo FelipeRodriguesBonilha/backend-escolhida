@@ -46,6 +46,10 @@ export class CreateProductDto {
     imageUrl?: string;
 
     @IsOptional()
+    @IsString()
+    expirationDate?: string;
+
+    @IsOptional()
     @Type(() => Number)
     @IsInt()
     @Min(0)
