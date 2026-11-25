@@ -104,6 +104,7 @@ export class ProductsService {
                     { description: { contains: search, mode: 'insensitive' as const } },
                     { category: { name: { contains: search, mode: 'insensitive' as const } } },
                     { brand: { name: { contains: search, mode: 'insensitive' as const } } },
+                    { colors: { some: { barcode: { contains: search } } } },
                 ],
             }),
         };
