@@ -17,7 +17,7 @@ import { Role } from 'src/users/__enums__/role.enum';
 import { CreateProductDto } from './__dtos__/createProduct.dto';
 import { ReturnProductDto, ReturnProductColorDto } from './__dtos__/returnProduct.dto';
 import { UpdateProductDto } from './__dtos__/updateProduct.dto';
-import { CreateProductColorDto } from './__dtos__/createProductColor.dto';
+import { ConvertProductToColorDto, CreateProductColorDto } from './__dtos__/createProductColor.dto';
 import { ProductsService } from './products.service';
 
 @Roles(Role.Admin)
@@ -99,6 +99,14 @@ export class ProductsController {
     @UploadedFile() file?: Express.Multer.File,
   ): Promise<ReturnProductColorDto> {
     return new ReturnProductColorDto(await this.productsService.addColor(id, dto, file));
+  }
+
+  @Post(':id/colors/convert')
+  async convertProductToColor(
+    @Param('id') id: string,
+    @Body() dto: ConvertProductToColorDto,
+  ): Promise<ReturnProductColorDto> {
+    return new ReturnProductColorDto(await this.productsService.convertProductToColor(id, dto));
   }
 
   @Patch(':id/colors/:colorId')

@@ -7,7 +7,7 @@ import {
 import { PrismaService } from 'src/prisma.service';
 import { UploadService } from 'src/upload/upload.service';
 import { CreateProductDto } from './__dtos__/createProduct.dto';
-import { CreateProductColorDto } from './__dtos__/createProductColor.dto';
+import { ConvertProductToColorDto, CreateProductColorDto } from './__dtos__/createProductColor.dto';
 import { UpdateProductDto } from './__dtos__/updateProduct.dto';
 import { generateInternalBarcode } from 'src/utils/barcode';
 
@@ -314,6 +314,53 @@ export class ProductsService {
                 colorCode: dto.colorCode ?? color.colorCode,
                 ...(imageUrl !== undefined && { imageUrl }),
             },
+        });
+    }
+
+    async convertProductToColor(productId: string, dto: ConvertProductToColorDto) {
+        const source = await this.prisma.product.findUnique({
+            where: { barcode: dto.barcode },
+        });
+        if (!source) throw new NotFoundException('Nenhum produto encontrado com este código de barras');
+        if (source.id === productId) throw new BadRequestException('Este código de barras já pertence ao próprio produto');
+        await this.findOne(productId);
+
+        return this.prisma.$transaction(async (tx) => {
+            let color;
+            if (dto.colorId) {
+                const existing = await tx.productColor.findFirst({ where: { id: dto.colorId, productId } });
+                if (!existing) throw new NotFoundException('Cor não encontrada');
+                color = await tx.productColor.update({
+                    where: { id: dto.colorId },
+                    data: {
+                        ...(dto.name && { name: dto.name }),
+                        ...(dto.colorCode && { colorCode: dto.colorCode }),
+                        barcode: source.barcode,
+                    },
+                });
+            } else {
+                const maxOrder = await tx.productColor.aggregate({
+                    where: { productId },
+                    _max: { order: true },
+                });
+                color = await tx.productColor.create({
+                    data: {
+                        productId,
+                        name: dto.name || source.name,
+                        barcode: source.barcode,
+                        colorCode: dto.colorCode,
+                        imageUrl: source.imageUrl,
+                        order: (maxOrder._max.order ?? -1) + 1,
+                    },
+                });
+            }
+
+            await tx.product.update({
+                where: { id: source.id },
+                data: { active: false, barcode: null },
+            });
+
+            return color;
         });
     }
 

@@ -22,3 +22,20 @@ export class CreateProductColorDto {
     })
     removeImage?: boolean;
 }
+
+export class ConvertProductToColorDto {
+    @IsString()
+    barcode: string;
+
+    @IsOptional()
+    @IsString()
+    colorId?: string;
+
+    @IsOptional()
+    @IsString()
+    name?: string;
+
+    @IsOptional()
+    @IsString()
+    colorCode?: string;
+}
