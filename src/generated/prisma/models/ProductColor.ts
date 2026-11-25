@@ -38,6 +38,7 @@ export type ProductColorMinAggregateOutputType = {
   id: string | null
   productId: string | null
   name: string | null
+  barcode: string | null
   colorCode: string | null
   imageUrl: string | null
   order: number | null
@@ -48,6 +49,7 @@ export type ProductColorMaxAggregateOutputType = {
   id: string | null
   productId: string | null
   name: string | null
+  barcode: string | null
   colorCode: string | null
   imageUrl: string | null
   order: number | null
@@ -58,6 +60,7 @@ export type ProductColorCountAggregateOutputType = {
   id: number
   productId: number
   name: number
+  barcode: number
   colorCode: number
   imageUrl: number
   order: number
@@ -78,6 +81,7 @@ export type ProductColorMinAggregateInputType = {
   id?: true
   productId?: true
   name?: true
+  barcode?: true
   colorCode?: true
   imageUrl?: true
   order?: true
@@ -88,6 +92,7 @@ export type ProductColorMaxAggregateInputType = {
   id?: true
   productId?: true
   name?: true
+  barcode?: true
   colorCode?: true
   imageUrl?: true
   order?: true
@@ -98,6 +103,7 @@ export type ProductColorCountAggregateInputType = {
   id?: true
   productId?: true
   name?: true
+  barcode?: true
   colorCode?: true
   imageUrl?: true
   order?: true
@@ -195,6 +201,7 @@ export type ProductColorGroupByOutputType = {
   id: string
   productId: string
   name: string
+  barcode: string | null
   colorCode: string | null
   imageUrl: string | null
   order: number
@@ -228,6 +235,7 @@ export type ProductColorWhereInput = {
   id?: Prisma.StringFilter<"ProductColor"> | string
   productId?: Prisma.StringFilter<"ProductColor"> | string
   name?: Prisma.StringFilter<"ProductColor"> | string
+  barcode?: Prisma.StringNullableFilter<"ProductColor"> | string | null
   colorCode?: Prisma.StringNullableFilter<"ProductColor"> | string | null
   imageUrl?: Prisma.StringNullableFilter<"ProductColor"> | string | null
   order?: Prisma.IntFilter<"ProductColor"> | number
@@ -239,6 +247,7 @@ export type ProductColorOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   productId?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  barcode?: Prisma.SortOrderInput | Prisma.SortOrder
   colorCode?: Prisma.SortOrderInput | Prisma.SortOrder
   imageUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   order?: Prisma.SortOrder
@@ -248,6 +257,7 @@ export type ProductColorOrderByWithRelationInput = {
 
 export type ProductColorWhereUniqueInput = Prisma.AtLeast<{
   id?: string
+  barcode?: string
   AND?: Prisma.ProductColorWhereInput | Prisma.ProductColorWhereInput[]
   OR?: Prisma.ProductColorWhereInput[]
   NOT?: Prisma.ProductColorWhereInput | Prisma.ProductColorWhereInput[]
@@ -258,12 +268,13 @@ export type ProductColorWhereUniqueInput = Prisma.AtLeast<{
   order?: Prisma.IntFilter<"ProductColor"> | number
   createdAt?: Prisma.DateTimeFilter<"ProductColor"> | Date | string
   product?: Prisma.XOR<Prisma.ProductScalarRelationFilter, Prisma.ProductWhereInput>
-}, "id">
+}, "id" | "barcode">
 
 export type ProductColorOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   productId?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  barcode?: Prisma.SortOrderInput | Prisma.SortOrder
   colorCode?: Prisma.SortOrderInput | Prisma.SortOrder
   imageUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   order?: Prisma.SortOrder
@@ -282,6 +293,7 @@ export type ProductColorScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"ProductColor"> | string
   productId?: Prisma.StringWithAggregatesFilter<"ProductColor"> | string
   name?: Prisma.StringWithAggregatesFilter<"ProductColor"> | string
+  barcode?: Prisma.StringNullableWithAggregatesFilter<"ProductColor"> | string | null
   colorCode?: Prisma.StringNullableWithAggregatesFilter<"ProductColor"> | string | null
   imageUrl?: Prisma.StringNullableWithAggregatesFilter<"ProductColor"> | string | null
   order?: Prisma.IntWithAggregatesFilter<"ProductColor"> | number
@@ -291,6 +303,7 @@ export type ProductColorScalarWhereWithAggregatesInput = {
 export type ProductColorCreateInput = {
   id?: string
   name: string
+  barcode?: string | null
   colorCode?: string | null
   imageUrl?: string | null
   order?: number
@@ -302,6 +315,7 @@ export type ProductColorUncheckedCreateInput = {
   id?: string
   productId: string
   name: string
+  barcode?: string | null
   colorCode?: string | null
   imageUrl?: string | null
   order?: number
@@ -311,6 +325,7 @@ export type ProductColorUncheckedCreateInput = {
 export type ProductColorUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  barcode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   colorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   order?: Prisma.IntFieldUpdateOperationsInput | number
@@ -322,6 +337,7 @@ export type ProductColorUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   productId?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  barcode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   colorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   order?: Prisma.IntFieldUpdateOperationsInput | number
@@ -332,6 +348,7 @@ export type ProductColorCreateManyInput = {
   id?: string
   productId: string
   name: string
+  barcode?: string | null
   colorCode?: string | null
   imageUrl?: string | null
   order?: number
@@ -341,6 +358,7 @@ export type ProductColorCreateManyInput = {
 export type ProductColorUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  barcode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   colorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   order?: Prisma.IntFieldUpdateOperationsInput | number
@@ -351,6 +369,7 @@ export type ProductColorUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   productId?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  barcode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   colorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   order?: Prisma.IntFieldUpdateOperationsInput | number
@@ -371,6 +390,7 @@ export type ProductColorCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   productId?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  barcode?: Prisma.SortOrder
   colorCode?: Prisma.SortOrder
   imageUrl?: Prisma.SortOrder
   order?: Prisma.SortOrder
@@ -385,6 +405,7 @@ export type ProductColorMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   productId?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  barcode?: Prisma.SortOrder
   colorCode?: Prisma.SortOrder
   imageUrl?: Prisma.SortOrder
   order?: Prisma.SortOrder
@@ -395,6 +416,7 @@ export type ProductColorMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   productId?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  barcode?: Prisma.SortOrder
   colorCode?: Prisma.SortOrder
   imageUrl?: Prisma.SortOrder
   order?: Prisma.SortOrder
@@ -450,6 +472,7 @@ export type ProductColorUncheckedUpdateManyWithoutProductNestedInput = {
 export type ProductColorCreateWithoutProductInput = {
   id?: string
   name: string
+  barcode?: string | null
   colorCode?: string | null
   imageUrl?: string | null
   order?: number
@@ -459,6 +482,7 @@ export type ProductColorCreateWithoutProductInput = {
 export type ProductColorUncheckedCreateWithoutProductInput = {
   id?: string
   name: string
+  barcode?: string | null
   colorCode?: string | null
   imageUrl?: string | null
   order?: number
@@ -498,6 +522,7 @@ export type ProductColorScalarWhereInput = {
   id?: Prisma.StringFilter<"ProductColor"> | string
   productId?: Prisma.StringFilter<"ProductColor"> | string
   name?: Prisma.StringFilter<"ProductColor"> | string
+  barcode?: Prisma.StringNullableFilter<"ProductColor"> | string | null
   colorCode?: Prisma.StringNullableFilter<"ProductColor"> | string | null
   imageUrl?: Prisma.StringNullableFilter<"ProductColor"> | string | null
   order?: Prisma.IntFilter<"ProductColor"> | number
@@ -507,6 +532,7 @@ export type ProductColorScalarWhereInput = {
 export type ProductColorCreateManyProductInput = {
   id?: string
   name: string
+  barcode?: string | null
   colorCode?: string | null
   imageUrl?: string | null
   order?: number
@@ -516,6 +542,7 @@ export type ProductColorCreateManyProductInput = {
 export type ProductColorUpdateWithoutProductInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  barcode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   colorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   order?: Prisma.IntFieldUpdateOperationsInput | number
@@ -525,6 +552,7 @@ export type ProductColorUpdateWithoutProductInput = {
 export type ProductColorUncheckedUpdateWithoutProductInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  barcode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   colorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   order?: Prisma.IntFieldUpdateOperationsInput | number
@@ -534,6 +562,7 @@ export type ProductColorUncheckedUpdateWithoutProductInput = {
 export type ProductColorUncheckedUpdateManyWithoutProductInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  barcode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   colorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   order?: Prisma.IntFieldUpdateOperationsInput | number
@@ -546,6 +575,7 @@ export type ProductColorSelect<ExtArgs extends runtime.Types.Extensions.Internal
   id?: boolean
   productId?: boolean
   name?: boolean
+  barcode?: boolean
   colorCode?: boolean
   imageUrl?: boolean
   order?: boolean
@@ -557,6 +587,7 @@ export type ProductColorSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   id?: boolean
   productId?: boolean
   name?: boolean
+  barcode?: boolean
   colorCode?: boolean
   imageUrl?: boolean
   order?: boolean
@@ -568,6 +599,7 @@ export type ProductColorSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   id?: boolean
   productId?: boolean
   name?: boolean
+  barcode?: boolean
   colorCode?: boolean
   imageUrl?: boolean
   order?: boolean
@@ -579,13 +611,14 @@ export type ProductColorSelectScalar = {
   id?: boolean
   productId?: boolean
   name?: boolean
+  barcode?: boolean
   colorCode?: boolean
   imageUrl?: boolean
   order?: boolean
   createdAt?: boolean
 }
 
-export type ProductColorOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "productId" | "name" | "colorCode" | "imageUrl" | "order" | "createdAt", ExtArgs["result"]["productColor"]>
+export type ProductColorOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "productId" | "name" | "barcode" | "colorCode" | "imageUrl" | "order" | "createdAt", ExtArgs["result"]["productColor"]>
 export type ProductColorInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   product?: boolean | Prisma.ProductDefaultArgs<ExtArgs>
 }
@@ -605,6 +638,7 @@ export type $ProductColorPayload<ExtArgs extends runtime.Types.Extensions.Intern
     id: string
     productId: string
     name: string
+    barcode: string | null
     colorCode: string | null
     imageUrl: string | null
     order: number
@@ -1036,6 +1070,7 @@ export interface ProductColorFieldRefs {
   readonly id: Prisma.FieldRef<"ProductColor", 'String'>
   readonly productId: Prisma.FieldRef<"ProductColor", 'String'>
   readonly name: Prisma.FieldRef<"ProductColor", 'String'>
+  readonly barcode: Prisma.FieldRef<"ProductColor", 'String'>
   readonly colorCode: Prisma.FieldRef<"ProductColor", 'String'>
   readonly imageUrl: Prisma.FieldRef<"ProductColor", 'String'>
   readonly order: Prisma.FieldRef<"ProductColor", 'Int'>

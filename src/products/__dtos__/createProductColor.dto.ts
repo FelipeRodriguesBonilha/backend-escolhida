@@ -10,6 +10,10 @@ export class CreateProductColorDto {
     colorCode?: string;
 
     @IsOptional()
+    @IsString()
+    barcode?: string;
+
+    @IsOptional()
     @IsBoolean()
     @Transform(({ value }) => {
         if (value === 'true') return true;
