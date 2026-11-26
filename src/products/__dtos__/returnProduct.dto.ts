@@ -57,6 +57,7 @@ export class ReturnProductDto {
     brandId: string | null;
     supplierId: string | null;
     imageUrl: string | null;
+    expirationDate: Date | null;
     active: boolean;
     showInCatalog: boolean;
     createdAt: Date;
@@ -90,6 +91,7 @@ export class ReturnProductDto {
         this.brandId = product.brandId;
         this.supplierId = product.supplierId;
         this.imageUrl = product.imageUrl;
+        this.expirationDate = product.expirationDate;
         this.active = product.active;
         this.showInCatalog = product.showInCatalog;
         this.createdAt = product.createdAt;

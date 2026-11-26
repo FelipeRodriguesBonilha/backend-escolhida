@@ -36,7 +36,7 @@ export class ProductsService {
             if (existsInVariation) throw new ConflictException('Código de barras já cadastrado em uma variação');
         }
 
-        const { initialStock, minQuantity, ...productData } = dto;
+        const { initialStock, minQuantity, expirationDate, ...productData } = dto;
 
         const stockQuantity = initialStock ?? 0;
         const minStockQuantity = minQuantity ?? 0;
@@ -66,6 +66,7 @@ export class ProductsService {
                     barcode,
                     barcodeGenerated,
                     imageUrl: mainImageUrl,
+                    expirationDate: expirationDate ? new Date(expirationDate) : null,
                 }
             });
 
@@ -158,7 +159,7 @@ export class ProductsService {
             if (existsInVariation) throw new ConflictException('Código de barras já cadastrado em uma variação');
         }
 
-        const { initialStock, minQuantity, removeImage, removeImageIds, ...productData } = dto;
+        const { initialStock, minQuantity, removeImage, removeImageIds, expirationDate, ...productData } = dto;
 
         if (removeImageIds && removeImageIds.length > 0) {
             const toRemove = await this.prisma.productImage.findMany({
@@ -200,6 +201,9 @@ export class ProductsService {
             data: {
                 ...productData,
                 imageUrl: currentMain?.url ?? null,
+                ...(expirationDate !== undefined && {
+                    expirationDate: expirationDate ? new Date(expirationDate) : null,
+                }),
             },
             include: { category: true, brand: true, supplier: true, stock: true, variations: { orderBy: { order: 'asc' } }, images: { orderBy: { order: 'asc' } } },
         });
@@ -247,6 +251,32 @@ export class ProductsService {
         return stocks
             .filter((s) => s.quantity <= s.minQuantity)
             .map((s) => s.product);
+    }
+
+    async findExpirations(days: number = 90) {
+        const now = new Date();
+        const limit = new Date(now);
+        limit.setDate(limit.getDate() + days);
+        const include = {
+            category: true, brand: true, supplier: true, stock: true,
+            variations: { orderBy: { order: 'asc' as const } },
+            images: { orderBy: { order: 'asc' as const } },
+        };
+
+        const [expired, expiring] = await Promise.all([
+            this.prisma.product.findMany({
+                where: { active: true, expirationDate: { not: null, lt: now } },
+                include,
+                orderBy: { expirationDate: 'asc' },
+            }),
+            this.prisma.product.findMany({
+                where: { active: true, expirationDate: { gte: now, lte: limit } },
+                include,
+                orderBy: { expirationDate: 'asc' },
+            }),
+        ]);
+
+        return { expired, expiring };
     }
 
     private async checkBarcodeConflict(barcode: string, excludeVariationId?: string) {
