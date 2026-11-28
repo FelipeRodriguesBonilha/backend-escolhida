@@ -8,6 +8,8 @@ const adapter = new PrismaPg({
 });
 const prisma = new PrismaClient({ adapter });
 
+const CATEGORY_NAME = 'Importados NFe';
+
 async function main() {
     const xmlPath = process.argv[2];
     if (!xmlPath) {
@@ -15,12 +17,21 @@ async function main() {
         process.exit(1);
     }
 
-    const { emitName, items } = parseNfe(fs.readFileSync(xmlPath, 'utf-8'));
-    console.log(`Backfill supplierCode | emitente: ${emitName} | ${items.length} itens`);
+    const { emitCnpj, emitName, items } = parseNfe(fs.readFileSync(xmlPath, 'utf-8'));
+    console.log(`Backfill supplierCode | emitente: ${emitName} (${emitCnpj}) | ${items.length} itens`);
+
+    const cleared = await prisma.product.updateMany({
+        where: { supplierCode: { not: null } },
+        data: { supplierCode: null },
+    });
+    console.log(`supplierCode zerados: ${cleared.count}`);
+
+    const supplier = emitCnpj
+        ? await prisma.supplier.findUnique({ where: { cnpj: emitCnpj } })
+        : null;
 
     const claimed = new Set<string>();
     let filled = 0;
-    let already = 0;
     let notFound = 0;
     const warnings: string[] = [];
 
@@ -42,6 +53,9 @@ async function main() {
                     name: { equals: item.name, mode: 'insensitive' },
                     barcodeGenerated: true,
                     barcode: { startsWith: '200' },
+                    category: { name: CATEGORY_NAME },
+                    ...(supplier && { supplierId: supplier.id }),
+                    ...(emitName && { brand: { name: emitName } }),
                     id: { notIn: [...claimed] },
                 },
                 orderBy: { createdAt: 'asc' },
@@ -57,16 +71,6 @@ async function main() {
 
         claimed.add(product.id);
 
-        if (product.supplierCode === item.supplierCode) {
-            already++;
-            continue;
-        }
-
-        if (product.supplierCode && product.supplierCode !== item.supplierCode) {
-            warnings.push(`[${item.nItem}] "${item.name}" já tem supplierCode ${product.supplierCode} (nota: ${item.supplierCode}) — não sobrescrito`);
-            continue;
-        }
-
         await prisma.product.update({
             where: { id: product.id },
             data: { supplierCode: item.supplierCode },
@@ -76,7 +80,7 @@ async function main() {
     }
 
     for (const w of warnings) console.warn(`  ! ${w}`);
-    console.log(`Concluído: ${filled} preenchidos, ${already} já estavam ok, ${notFound} não encontrados, ${warnings.length} avisos`);
+    console.log(`Concluído: ${filled} preenchidos, ${notFound} não encontrados, ${warnings.length} avisos`);
 }
 
 main()
