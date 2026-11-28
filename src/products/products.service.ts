@@ -286,84 +286,96 @@ export class ProductsService {
             throw new BadRequestException('Nenhum item encontrado no XML da NF-e');
         }
 
-        const supplier = emitCnpj
-            ? await this.prisma.supplier.upsert({
-                where: { cnpj: emitCnpj },
+        return this.prisma.$transaction(async (tx) => {
+            const supplier = emitCnpj
+                ? await tx.supplier.upsert({
+                    where: { cnpj: emitCnpj },
+                    update: {},
+                    create: { name: emitName ?? 'Fornecedor NFe', cnpj: emitCnpj, active: true },
+                })
+                : null;
+
+            const category = await tx.category.upsert({
+                where: { name: 'Importados NFe' },
                 update: {},
-                create: { name: emitName ?? 'Fornecedor NFe', cnpj: emitCnpj, active: true },
-            })
-            : null;
+                create: { name: 'Importados NFe', active: true },
+            });
 
-        const category = await this.prisma.category.upsert({
-            where: { name: 'Importados NFe' },
-            update: {},
-            create: { name: 'Importados NFe', active: true },
-        });
+            const brand = await tx.brand.upsert({
+                where: { name: emitName ?? 'SEM MARCA' },
+                update: {},
+                create: { name: emitName ?? 'SEM MARCA', active: true },
+            });
 
-        const brand = await this.prisma.brand.upsert({
-            where: { name: emitName ?? 'SEM MARCA' },
-            update: {},
-            create: { name: emitName ?? 'SEM MARCA', active: true },
-        });
+            const result = {
+                emitter: emitName ?? null,
+                total: items.length,
+                created: 0,
+                restocked: 0,
+                errors: [] as { nItem: string; name: string; message: string }[],
+            };
 
-        const result = {
-            emitter: emitName ?? null,
-            total: items.length,
-            created: 0,
-            restocked: 0,
-            errors: [] as { nItem: string; name: string; message: string }[],
-        };
+            for (const item of items) {
+                try {
+                    let existing = item.barcode
+                        ? await tx.product.findUnique({ where: { barcode: item.barcode } })
+                        : null;
 
-        for (const item of items) {
-            try {
-                const existing = item.barcode
-                    ? await this.prisma.product.findUnique({ where: { barcode: item.barcode } })
-                    : null;
-
-                if (existing) {
-                    await this.prisma.stock.upsert({
-                        where: { productId: existing.id },
-                        update: { quantity: { increment: item.quantity } },
-                        create: { productId: existing.id, quantity: item.quantity },
+                    existing ??= await tx.product.findFirst({
+                        where: {
+                            active: true,
+                            name: { equals: item.name, mode: 'insensitive' },
+                            ...(item.supplierCode ? { supplierCode: item.supplierCode } : {}),
+                        },
                     });
-                    await this.prisma.product.update({
-                        where: { id: existing.id },
-                        data: { costPrice: item.unitCost },
+
+                    if (existing) {
+                        await tx.stock.upsert({
+                            where: { productId: existing.id },
+                            update: { quantity: { increment: item.quantity } },
+                            create: { productId: existing.id, quantity: item.quantity },
+                        });
+                        await tx.product.update({
+                            where: { id: existing.id },
+                            data: {
+                                costPrice: item.unitCost,
+                                ...(item.supplierCode && !existing.supplierCode && { supplierCode: item.supplierCode }),
+                            },
+                        });
+                        result.restocked++;
+                        continue;
+                    }
+
+                    const barcode = item.barcode ?? (await generateInternalBarcode(tx));
+
+                    const product = await tx.product.create({
+                        data: {
+                            name: item.name,
+                            barcode,
+                            barcodeGenerated: !item.barcode,
+                            price: item.unitCost,
+                            costPrice: item.unitCost,
+                            categoryId: category.id,
+                            brandId: brand.id,
+                            supplierId: supplier?.id,
+                            supplierCode: item.supplierCode || null,
+                        },
                     });
-                    result.restocked++;
-                    continue;
+
+                    await tx.stock.create({
+                        data: { productId: product.id, quantity: item.quantity },
+                    });
+
+                    result.created++;
+                } catch (error) {
+                    throw new BadRequestException(
+                        `Erro no item ${item.nItem} "${item.name}": ${error instanceof Error ? error.message : 'erro desconhecido'}. Nenhum produto foi importado.`,
+                    );
                 }
-
-                const barcode = item.barcode ?? (await generateInternalBarcode(this.prisma));
-
-                const product = await this.prisma.product.create({
-                    data: {
-                        name: item.name,
-                        barcode,
-                        barcodeGenerated: !item.barcode,
-                        price: item.unitCost,
-                        costPrice: item.unitCost,
-                        categoryId: category.id,
-                        brandId: brand.id,
-                        supplierId: supplier?.id,
-                    },
-                });
-
-                await this.prisma.stock.create({
-                    data: { productId: product.id, quantity: item.quantity },
-                });
-
-                result.created++;
-            } catch (error) {
-                result.errors.push({
-                    nItem: item.nItem,
-                    name: item.name,
-                    message: error instanceof Error ? error.message : 'Erro desconhecido',
-                });
             }
-        }
 
-        return result;
+            return result;
+        }, { timeout: 60000, maxWait: 15000 });
     }
 
     private async checkBarcodeConflict(barcode: string, excludeVariationId?: string) {

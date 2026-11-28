@@ -1,6 +1,6 @@
-import { PrismaClient } from '../generated/prisma/client';
+import { PrismaClient, Prisma } from '../generated/prisma/client';
 
-export async function generateInternalBarcode(prisma: PrismaClient): Promise<string> {
+export async function generateInternalBarcode(prisma: PrismaClient | Prisma.TransactionClient): Promise<string> {
     let barcode: string = '';
     let exists = true;
     
