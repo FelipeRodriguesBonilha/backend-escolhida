@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -53,6 +54,16 @@ export class ProductsController {
   @Get('low-stock')
   async findLowStock(): Promise<ReturnProductDto[]> {
     return (await this.productsService.findLowStock()).map(product => new ReturnProductDto(product));
+  }
+
+  @Post('import-nfe')
+  @UseInterceptors(FileInterceptor('file'))
+  async importNfe(@UploadedFile() file?: Express.Multer.File) {
+    if (!file) throw new BadRequestException('Arquivo XML não enviado');
+    if (!file.originalname.toLowerCase().endsWith('.xml')) {
+      throw new BadRequestException('Envie o arquivo .xml da NF-e');
+    }
+    return this.productsService.importNfe(file.buffer.toString('utf-8'));
   }
 
   @Get('expirations')

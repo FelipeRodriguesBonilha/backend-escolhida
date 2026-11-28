@@ -78,6 +78,7 @@ model Product {
   categoryId       String
   brandId          String
   supplierId       String?
+  supplierCode     String?
   imageUrl         String?
   expirationDate   DateTime?
   active           Boolean    @default(true)
