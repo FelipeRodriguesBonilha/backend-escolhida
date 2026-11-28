@@ -10,6 +10,7 @@ import { CreateProductDto } from './__dtos__/createProduct.dto';
 import { ConvertProductToVariationDto, CreateProductVariationDto } from './__dtos__/createProductVariation.dto';
 import { UpdateProductDto } from './__dtos__/updateProduct.dto';
 import { generateInternalBarcode } from 'src/utils/barcode';
+import { parseNfe } from 'src/utils/nfe';
 
 @Injectable()
 export class ProductsService {
@@ -277,6 +278,92 @@ export class ProductsService {
         ]);
 
         return { expired, expiring };
+    }
+
+    async importNfe(xml: string) {
+        const { emitCnpj, emitName, items } = parseNfe(xml);
+        if (items.length === 0) {
+            throw new BadRequestException('Nenhum item encontrado no XML da NF-e');
+        }
+
+        const supplier = emitCnpj
+            ? await this.prisma.supplier.upsert({
+                where: { cnpj: emitCnpj },
+                update: {},
+                create: { name: emitName ?? 'Fornecedor NFe', cnpj: emitCnpj, active: true },
+            })
+            : null;
+
+        const category = await this.prisma.category.upsert({
+            where: { name: 'Importados NFe' },
+            update: {},
+            create: { name: 'Importados NFe', active: true },
+        });
+
+        const brand = await this.prisma.brand.upsert({
+            where: { name: emitName ?? 'SEM MARCA' },
+            update: {},
+            create: { name: emitName ?? 'SEM MARCA', active: true },
+        });
+
+        const result = {
+            emitter: emitName ?? null,
+            total: items.length,
+            created: 0,
+            restocked: 0,
+            errors: [] as { nItem: string; name: string; message: string }[],
+        };
+
+        for (const item of items) {
+            try {
+                const existing = item.barcode
+                    ? await this.prisma.product.findUnique({ where: { barcode: item.barcode } })
+                    : null;
+
+                if (existing) {
+                    await this.prisma.stock.upsert({
+                        where: { productId: existing.id },
+                        update: { quantity: { increment: item.quantity } },
+                        create: { productId: existing.id, quantity: item.quantity },
+                    });
+                    await this.prisma.product.update({
+                        where: { id: existing.id },
+                        data: { costPrice: item.unitCost },
+                    });
+                    result.restocked++;
+                    continue;
+                }
+
+                const barcode = item.barcode ?? (await generateInternalBarcode(this.prisma));
+
+                const product = await this.prisma.product.create({
+                    data: {
+                        name: item.name,
+                        barcode,
+                        barcodeGenerated: !item.barcode,
+                        price: item.unitCost,
+                        costPrice: item.unitCost,
+                        categoryId: category.id,
+                        brandId: brand.id,
+                        supplierId: supplier?.id,
+                    },
+                });
+
+                await this.prisma.stock.create({
+                    data: { productId: product.id, quantity: item.quantity },
+                });
+
+                result.created++;
+            } catch (error) {
+                result.errors.push({
+                    nItem: item.nItem,
+                    name: item.name,
+                    message: error instanceof Error ? error.message : 'Erro desconhecido',
+                });
+            }
+        }
+
+        return result;
     }
 
     private async checkBarcodeConflict(barcode: string, excludeVariationId?: string) {
