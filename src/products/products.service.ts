@@ -321,13 +321,17 @@ export class ProductsService {
                         ? await tx.product.findUnique({ where: { barcode: item.barcode } })
                         : null;
 
-                    existing ??= await tx.product.findFirst({
-                        where: {
-                            active: true,
-                            name: { equals: item.name, mode: 'insensitive' },
-                            ...(item.supplierCode ? { supplierCode: item.supplierCode } : {}),
-                        },
-                    });
+                    existing ??= item.supplierCode && supplier
+                        ? await tx.product.findFirst({
+                            where: { active: true, supplierCode: item.supplierCode, supplierId: supplier.id },
+                        })
+                        : await tx.product.findFirst({
+                            where: {
+                                active: true,
+                                name: { equals: item.name, mode: 'insensitive' },
+                                ...(item.supplierCode ? { supplierCode: item.supplierCode } : {}),
+                            },
+                        });
 
                     if (existing) {
                         await tx.stock.upsert({

@@ -28,8 +28,20 @@ async function main() {
 
     console.log(`[${item.nItem}] ${item.name} | cProd ${item.supplierCode} | EAN ${item.barcode ?? 'SEM GTIN'} | ${item.quantity}x R$ ${item.unitCost}`);
 
+    const supplier = emitCnpj
+        ? await prisma.supplier.upsert({
+            where: { cnpj: emitCnpj },
+            update: {},
+            create: { name: emitName ?? 'Fornecedor NFe', cnpj: emitCnpj, active: true },
+        })
+        : null;
+
     const existing = item.barcode
         ? await prisma.product.findUnique({ where: { barcode: item.barcode } })
+        : item.supplierCode && supplier
+        ? await prisma.product.findFirst({
+            where: { supplierCode: item.supplierCode, supplierId: supplier.id },
+        })
         : await prisma.product.findFirst({
             where: { name: { equals: item.name, mode: 'insensitive' }, supplierCode: item.supplierCode || undefined },
         });
@@ -38,14 +50,6 @@ async function main() {
         console.log(`Já existe (id ${existing.id}) — nada a fazer`);
         return;
     }
-
-    const supplier = emitCnpj
-        ? await prisma.supplier.upsert({
-            where: { cnpj: emitCnpj },
-            update: {},
-            create: { name: emitName ?? 'Fornecedor NFe', cnpj: emitCnpj, active: true },
-        })
-        : null;
 
     const category = await prisma.category.upsert({
         where: { name: CATEGORY_NAME },
